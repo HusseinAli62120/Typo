@@ -4,6 +4,7 @@ import Navbar from "../components/Nav/Navbar.vue";
 import { allowedKeys } from "../utils/values.ts";
 import getLetters from "../utils/getLetters.ts";
 import isMatchingLowerCase from "../utils/isMatchingLowerCase.ts";
+import { generate } from "random-words";
 
 // What the user is typing
 let typedValue = ref<string[]>([]);
@@ -11,11 +12,14 @@ let typedValue = ref<string[]>([]);
 // The text to type
 let text = ref<string[]>([]);
 
-text.value = "Hello This is a cool idea".split(" ");
+text.value = generate(30) as string[];
 
 getLetters({ text: text.value });
 
 const onKeyDown = (e: KeyboardEvent) => {
+  // Stop if done typing
+  if (typedValue.value.length >= text.value.length) return;
+
   // Return special commands
   if (!allowedKeys.includes(e.key)) return;
   // Delete on backspace
@@ -70,23 +74,23 @@ watch(
     <Navbar />
 
     <!-- Content -->
-    <div class="flex-1 flex justify-center py-20">
-      <div class="flex flex-wrap">
-        <p
+    <div class="flex-1 flex justify-center items-start py-20">
+      <div class="w-full max-w-4xl text-4xl whitespace-pre-wrap">
+        <span
           v-for="(char, index) in text"
           :key="index"
-          class="whitespace-pre text-4xl"
-          :class="
-            // Check if a character exists at this index, if so, do the check, if not, ignore it.
+          :class="[
             typedValue[index]
-              ? isMatchingLowerCase({ char: char, index: index, typedValue })
+              ? isMatchingLowerCase({ char, index, typedValue })
                 ? 'text-emerald-600'
-                : 'text-red-600 underline '
-              : 'text-black'
-          "
+                : char === ' '
+                  ? 'bg-red-200'
+                  : 'text-red-600 underline'
+              : 'text-black',
+            typedValue.length === index && 'cursor',
+          ]"
+          >{{ char }}</span
         >
-          {{ char }}
-        </p>
       </div>
     </div>
   </div>

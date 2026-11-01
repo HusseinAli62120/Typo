@@ -14,4 +14,6 @@ export default function getLetters({ text }: { text: string[] }) {
 
     // By the end of the loop, the array should be the same as the initial array, but letters instead of words
   }
+  // Capitalize the first letter
+  text[0] = text[0].toUpperCase();
 }

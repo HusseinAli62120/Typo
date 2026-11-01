@@ -7,3 +7,23 @@
 * {
   scrollbar-width: thin;
 }
+
+.cursor {
+  @apply relative inline;
+}
+
+.cursor::before {
+  content: "";
+  position: absolute;
+  @apply absolute left-0 w-0.5 bg-black;
+  left: 0;
+  top: 1;
+  height: 1em;
+  animation: blink 1s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
