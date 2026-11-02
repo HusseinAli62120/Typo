@@ -15,9 +15,7 @@
 .cursor::before {
   content: "";
   position: absolute;
-  @apply absolute left-0 w-0.5 bg-black;
-  left: 0;
-  top: 1;
+  @apply absolute left-0 w-0.5 top-2 bg-black;
   height: 1em;
   animation: blink 1s steps(1) infinite;
 }
@@ -26,4 +24,10 @@
   50% {
     opacity: 0;
   }
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
