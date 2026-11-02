@@ -1,10 +1,11 @@
 <script lang="ts" setup>
-import { nextTick, onMounted, onUnmounted, ref, watch } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import Navbar from "../components/Nav/Navbar.vue";
-import { allowedKeys } from "../utils/values.ts";
 import getLetters from "../utils/getLetters.ts";
 import isMatchingLowerCase from "../utils/isMatchingLowerCase.ts";
 import { generate } from "random-words";
+import { captureKeyStroke } from "../utils/captureKeyStroke.ts";
+import Results from "./Results/Results.vue";
 
 // What the user is typing
 let typedValue = ref<string[]>([]);
@@ -12,71 +13,126 @@ let typedValue = ref<string[]>([]);
 // The text to type
 let text = ref<string[]>([]);
 
+// Reference to the text box
 const box = ref<HTMLElement | null>(null);
 
-text.value = generate(100) as string[];
+// Stats
+const startTime = ref<number | null>(null);
+const endTime = ref<number | null>(null);
+const now = ref(Date.now());
+let timer: number | undefined;
+const graphArray = ref<number[]>([]);
+let graphTimer: number | undefined;
 
-getLetters({ text: text.value });
+// Done flag
+let isDone = ref<boolean>(false);
 
-const onKeyDown = (e: KeyboardEvent) => {
-  // Stop if done typing
-  if (typedValue.value.length >= text.value.length) return;
+const elapsedSeconds = computed(() => {
+  if (startTime.value === null) return 0;
+  // Divided by 1000 since they are in milliseconds
+  return Math.floor(((endTime.value ?? now.value) - startTime.value) / 1000);
+});
 
-  // stop Space from scrolling
-  if (
-    e.target instanceof HTMLElement &&
-    e.target.matches("input, textarea, [contenteditable]")
-  )
-    return;
+const time = computed(() => {
+  const minutes = `${Math.floor(elapsedSeconds.value / 60)}`;
+  const seconds = `${Math.floor(elapsedSeconds.value % 60)
+    .toString()
+    .padStart(2, "0")}`;
+  return `${minutes}:${seconds}`;
+});
 
-  if (e.key === " ") e.preventDefault();
-
-  // Return special commands
-  if (!allowedKeys.includes(e.key)) return;
-  // Delete on backspace
-  else if (e.key === "Backspace") {
-    typedValue.value = typedValue.value.slice(0, -1);
-
-    // Submit
-  } else if (e.key === "Enter") {
-    console.log("Submit");
-
-    // Space
-  } else if (e.key === " ") {
-    console.log("Space pressed");
-    typedValue.value.push(" ");
+const correctCharacters = computed(() => {
+  let count = 0;
+  for (let i = 0; i < typedValue.value.length; i++) {
+    if (typedValue.value[i] === text.value[i]) count++;
   }
+  return count;
+});
 
-  // Add character
-  else {
-    typedValue.value.push(e.key);
-  }
+const wpm = computed(() => {
+  // floor at 1 second so the first keystrokes don't show a huge spike
+  const minutes = Math.max(elapsedSeconds.value / 60, 1 / 60);
+  return startTime.value
+    ? Math.round(correctCharacters.value / 5 / minutes)
+    : 0;
+});
+
+const accuracy = computed(() =>
+  typedValue.value.length
+    ? Math.round((correctCharacters.value / typedValue.value.length) * 100)
+    : 100,
+);
+
+const restart = () => {
+  stopTimers();
+  typedValue.value = [];
+  graphArray.value = [];
+  now.value = Date.now();
+  startTime.value = null;
+  endTime.value = null;
+  isDone.value = false;
+  text.value = generate(30) as string[];
 };
 
-onMounted(() => {
-  document.addEventListener("keydown", onKeyDown);
-});
+const stopTimers = () => {
+  clearInterval(timer);
+  clearInterval(graphTimer);
+  timer = undefined;
+  graphTimer = undefined;
+};
 
-onUnmounted(() => {
-  document.removeEventListener("keydown", onKeyDown);
-});
-
-// Move to results screen when done
+// Start & record time
 watch(
-  () => typedValue.value,
-  (newValue) => {
-    if (newValue.length >= text.value.length - 1) {
-      setTimeout(() => {
-        alert("You are done");
+  typedValue,
+  (value) => {
+    // First keystroke starts the clock
+    if (startTime.value === null) {
+      startTime.value = Date.now();
+      now.value = startTime.value;
 
-        typedValue.value = [];
+      // Update "now" value every 250ms
+      timer = window.setInterval(() => (now.value = Date.now()), 250);
+
+      // Record WPM every second
+      graphTimer = window.setInterval(() => {
+        graphArray.value.push(wpm.value);
+      }, 1000);
+    }
+
+    // Finished the text: freeze the clock
+    if (value.length >= text.value.length - 1 && endTime.value === null) {
+      endTime.value = Date.now();
+      stopTimers();
+      setTimeout(() => {
+        isDone.value = true;
       }, 200);
     }
   },
-  {
-    deep: true,
-  },
+  { deep: true },
 );
+
+// Generate words & get their letters
+onMounted(() => {
+  text.value = generate(30) as string[];
+  getLetters({ text: text.value });
+});
+
+// Capture key strokes
+onMounted(() => {
+  document.addEventListener("keydown", (e: KeyboardEvent) => {
+    captureKeyStroke({ e: e, typedValue: typedValue.value, text: text.value });
+  });
+});
+
+// Remove listener on dismount
+onUnmounted(() => {
+  document.removeEventListener("keydown", (e: KeyboardEvent) => {
+    captureKeyStroke({ e: e, typedValue: typedValue.value, text: text.value });
+  });
+
+  // Stop timers
+  stopTimers();
+});
 
 let lastLineTop = -1;
 
@@ -112,7 +168,7 @@ watch(
         behavior: "smooth",
       });
     } else if (top < container.scrollTop) {
-      // cursor moved above the visible area (backspace / reset)
+      // cursor moved above the visible area (backspace / restart)
       container.scrollTo({ top, behavior: "smooth" });
     }
   },
@@ -121,12 +177,13 @@ watch(
 </script>
 
 <template>
-  <div class="screen">
+  <!-- Typing page -->
+  <div v-if="!isDone" class="screen">
     <!-- Navbar -->
     <Navbar />
 
     <!-- Content -->
-    <div class="flex-1 flex justify-center items-start py-20">
+    <div class="flex-1 flex flex-col justify-center items-start py-20">
       <div
         ref="box"
         class="relative w-full max-w-4xl text-start text-4xl whitespace-pre-wrap h-96 overflow-scroll leading-normal no-scrollbar"
@@ -147,6 +204,22 @@ watch(
           >{{ char }}</span
         >
       </div>
+
+      <div class="flex flex-row justify-center gap-5">
+        <p>wpm:{{ wpm }}</p>
+        <p>Time:{{ time }}</p>
+        <p>correctCharacters:{{ correctCharacters }}</p>
+      </div>
     </div>
   </div>
+
+  <Results
+    v-else
+    :wpm="wpm"
+    :wpm-array="graphArray"
+    :accuracy="accuracy"
+    :time="time"
+    @restart="restart"
+    :elapsed-seconds="elapsedSeconds"
+  />
 </template>
