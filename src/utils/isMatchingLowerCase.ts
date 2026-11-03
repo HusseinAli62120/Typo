@@ -1,11 +1,11 @@
 export default function isMatchingLowerCase({
   char,
-  typedValue,
+  typedLetters,
   index,
 }: {
   char: string;
-  typedValue: string[];
+  typedLetters: string[];
   index: number;
 }): boolean {
-  return char.toLowerCase() === typedValue[index].toLowerCase();
+  return char.toLowerCase() === typedLetters[index].toLowerCase();
 }

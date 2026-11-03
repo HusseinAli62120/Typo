@@ -1,19 +1,25 @@
-export default function getLetters({ text }: { text: string[] }) {
-  let length = text.length;
+export default function getLetters({
+  words,
+  letters,
+}: {
+  words: string[];
+  letters: string[];
+}) {
+  let length = words.length;
 
   for (let index = 0; index < length; index++) {
     // Get the first word and its letters
-    let word = text[0];
-    let letters = word.split("");
-
-    // Delete the first word
-    text.splice(0, 1);
+    let word = words[index];
+    let wordLetters = word.split("");
 
     // Add the letters to the end of the array with a space
-    text.push(...letters, " ");
+    if (index < length - 1) {
+      letters.push(...wordLetters, " ");
+      // final Character, don't add space
+    } else {
+      letters.push(...wordLetters);
+    }
 
-    // By the end of the loop, the array should be the same as the initial array, but letters instead of words
+    // By the end of the loop, the letters array should have the letters of each word
   }
-  // Capitalize the first letter
-  text[0] = text[0].toUpperCase();
 }

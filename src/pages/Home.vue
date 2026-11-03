@@ -22,10 +22,12 @@ const props = withDefaults(defineProps<FluidCursorProps>(), {
 });
 
 // What the user is typing
-let typedValue = ref<string[]>([]);
+let typedLetters = ref<string[]>([]);
+let typedWords = ref<string[]>([]);
 
 // The text to type
-let text = ref<string[]>([]);
+let words = ref<string[]>([]);
+let letters = ref<string[]>([]);
 
 // Reference to the text box
 const box = ref<HTMLElement | null>(null);
@@ -57,8 +59,8 @@ const time = computed(() => {
 
 const correctCharacters = computed(() => {
   let count = 0;
-  for (let i = 0; i < typedValue.value.length; i++) {
-    if (typedValue.value[i] === text.value[i]) count++;
+  for (let i = 0; i < typedLetters.value.length; i++) {
+    if (typedLetters.value[i] === letters.value[i]) count++;
   }
   return count;
 });
@@ -72,21 +74,26 @@ const wpm = computed(() => {
 });
 
 const accuracy = computed(() =>
-  typedValue.value.length
-    ? Math.round((correctCharacters.value / typedValue.value.length) * 100)
+  typedLetters.value.length
+    ? Math.round((correctCharacters.value / typedLetters.value.length) * 100)
     : 100,
 );
 
 const restart = () => {
   stopTimers();
-  typedValue.value = [];
+  typedLetters.value = [];
   graphArray.value = [];
+  typedWords.value = [];
+  words.value = [];
+  letters.value = [];
   now.value = Date.now();
   startTime.value = null;
   endTime.value = null;
   isDone.value = false;
-  text.value = generate(15) as string[];
-  getLetters({ text: text.value });
+
+  // Generate new words
+  words.value = generate(15) as string[];
+  getLetters({ words: words.value, letters: letters.value });
 };
 
 const stopTimers = () => {
@@ -98,9 +105,11 @@ const stopTimers = () => {
 
 // Start & record time
 watch(
-  typedValue,
+  typedLetters,
   (value) => {
     // First keystroke starts the clock
+    if (typedLetters.value.length === 0) return;
+
     if (startTime.value === null) {
       startTime.value = Date.now();
       now.value = startTime.value;
@@ -115,7 +124,7 @@ watch(
     }
 
     // Finished the text: freeze the clock
-    if (value.length >= text.value.length - 1 && endTime.value === null) {
+    if (value.length >= letters.value.length && endTime.value === null) {
       endTime.value = Date.now();
       stopTimers();
       setTimeout(() => {
@@ -128,21 +137,33 @@ watch(
 
 // Generate words & get their letters
 onMounted(() => {
-  text.value = generate(15) as string[];
-  getLetters({ text: text.value });
+  words.value = generate(15) as string[];
+  getLetters({ words: words.value, letters: letters.value });
 });
 
 // Capture key strokes
 onMounted(() => {
   document.addEventListener("keydown", (e: KeyboardEvent) => {
-    captureKeyStroke({ e: e, typedValue: typedValue.value, text: text.value });
+    captureKeyStroke({
+      e: e,
+      typedLetters: typedLetters.value,
+      letters: letters.value,
+      typedWords: typedWords.value,
+      words: words.value,
+    });
   });
 });
 
 // Remove listener on dismount
 onUnmounted(() => {
   document.removeEventListener("keydown", (e: KeyboardEvent) => {
-    captureKeyStroke({ e: e, typedValue: typedValue.value, text: text.value });
+    captureKeyStroke({
+      e: e,
+      typedLetters: typedLetters.value,
+      letters: letters.value,
+      typedWords: typedWords.value,
+      words: words.value,
+    });
   });
 
   // Stop timers
@@ -153,7 +174,7 @@ let lastLineTop = -1;
 
 // Auto scroll with the cursor
 watch(
-  typedValue,
+  typedLetters,
   async (value) => {
     if (value.length === 0) lastLineTop = -1; // new round
 
@@ -199,22 +220,31 @@ watch(
 
     <!-- Content -->
     <div class="flex-1 flex flex-col justify-center items-start py-20">
+      <button
+        @click="
+          () => {
+            console.log(typedWords);
+          }
+        "
+      >
+        Click Me
+      </button>
       <div
         ref="box"
         class="relative w-full max-w-4xl text-start text-4xl whitespace-pre-wrap h-96 overflow-scroll leading-normal no-scrollbar"
       >
         <span
-          v-for="(char, index) in text"
+          v-for="(char, index) in letters"
           :key="index"
           :class="[
-            typedValue[index]
-              ? isMatchingLowerCase({ char, index, typedValue })
+            typedLetters[index]
+              ? isMatchingLowerCase({ char, index, typedLetters })
                 ? 'text-emerald-600'
                 : char === ' '
                   ? 'bg-red-200'
                   : 'text-red-600 underline'
               : 'text-foreground',
-            typedValue.length === index && 'cursor',
+            typedLetters.length === index && 'cursor',
           ]"
           >{{ char }}</span
         >
@@ -236,6 +266,7 @@ watch(
     :time="time"
     @restart="restart"
     :elapsed-seconds="elapsedSeconds"
+    :correct-words="typedWords"
   />
 
   <FluidCursor

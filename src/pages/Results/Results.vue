@@ -1,10 +1,11 @@
 <script setup lang="ts">
-const { wpm, accuracy, wpmArray, time } = defineProps<{
+const { wpm, accuracy, wpmArray, time, correctWords } = defineProps<{
   wpm: number;
   wpmArray: number[];
   accuracy: number;
   time: string;
   elapsedSeconds: number;
+  correctWords: string[];
 }>();
 
 const emit = defineEmits<{ (emit: "restart"): void }>();
@@ -17,7 +18,17 @@ const emit = defineEmits<{ (emit: "restart"): void }>();
     <p>Graph: {{ wpmArray.length }}</p>
     <p>Accuracy: {{ accuracy }}</p>
     <p>Time: {{ time }}</p>
-    <p>Min: {{ elapsedSeconds }}</p>
+    <p>Seconds: {{ elapsedSeconds }}</p>
+    <p>Correct words: {{ correctWords }}</p>
     <button @click="emit('restart')">Restart</button>
+    <button
+      @click="
+        () => {
+          console.log(correctWords);
+        }
+      "
+    >
+      Restart
+    </button>
   </div>
 </template>

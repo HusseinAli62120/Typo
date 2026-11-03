@@ -1,16 +1,22 @@
+import { ref } from "vue";
 import { allowedKeys } from "./values";
+
+let currentWord = ref<string>("");
 
 export const captureKeyStroke = ({
   e,
-  typedValue,
-  text,
+  typedLetters,
+  letters,
+  typedWords,
 }: {
   e: KeyboardEvent;
-  typedValue: string[];
-  text: string[];
+  typedLetters: string[];
+  letters: string[];
+  typedWords: string[];
+  words: string[];
 }) => {
   // Stop if done typing
-  if (typedValue.length >= text.length) return;
+  if (typedLetters.length >= letters.length) return;
 
   // stop Space from scrolling
   if (
@@ -19,13 +25,31 @@ export const captureKeyStroke = ({
   )
     return;
 
-  if (e.key === " ") e.preventDefault();
+  const expectedCharacter = letters[typedLetters.length];
+
+  const isSpace = expectedCharacter === " ";
 
   // Return special commands
   if (!allowedKeys.includes(e.key)) return;
   // Delete on backspace
   else if (e.key === "Backspace") {
-    typedValue.pop();
+    // Nothing to delete
+    if (typedLetters.length === 0) {
+      return;
+    }
+
+    const previousExpectedCharacter = letters[typedLetters.length - 1];
+    console.log(previousExpectedCharacter);
+
+    // Is space
+    if (previousExpectedCharacter === " ") {
+      const deletedWord = typedWords.pop();
+      currentWord.value = deletedWord as string;
+      typedLetters.pop();
+    } else {
+      currentWord.value = currentWord.value.slice(0, -1);
+      typedLetters.pop();
+    }
 
     // Submit
   } else if (e.key === "Enter") {
@@ -33,12 +57,35 @@ export const captureKeyStroke = ({
 
     // Space
   } else if (e.key === " ") {
-    console.log("Space pressed");
-    typedValue.push(" ");
+    e.preventDefault();
+
+    if (isSpace) {
+      typedWords.push(currentWord.value);
+      currentWord.value = "";
+      typedLetters.push(e.key);
+    } else {
+      typedLetters.push(e.key);
+      currentWord.value += e.key;
+    }
   }
 
   // Add character
   else {
-    typedValue.push(e.key);
+    if (isSpace) {
+      typedWords.push(currentWord.value);
+      currentWord.value = "";
+      typedLetters.push(e.key);
+    } else {
+      currentWord.value += e.key;
+      typedLetters.push(e.key);
+    }
   }
+
+  // Push the final word when all letters have been typed and reset current word
+  if (typedLetters.length === letters.length && currentWord.value) {
+    typedWords.push(currentWord.value);
+    currentWord.value = "";
+  }
+
+  console.log(currentWord.value);
 };
