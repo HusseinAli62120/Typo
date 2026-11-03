@@ -198,7 +198,7 @@ watch(
                 : char === ' '
                   ? 'bg-red-200'
                   : 'text-red-600 underline'
-              : 'text-black',
+              : 'text-foreground',
             typedValue.length === index && 'cursor',
           ]"
           >{{ char }}</span
