@@ -6,6 +6,29 @@ import isMatchingLowerCase from "../utils/isMatchingLowerCase.ts";
 import { generate } from "random-words";
 import { captureKeyStroke } from "../utils/captureKeyStroke.ts";
 import Results from "./Results/Results.vue";
+import FluidCursor from "@/components/ui/fluid-cursor/FluidCursor.vue";
+
+interface Props {
+  enabled?: boolean;
+  densityDissipation?: number;
+  velocityDissipation?: number;
+  pressure?: number;
+  curl?: number;
+  splatRadius?: number;
+  splatForce?: number;
+  transparent?: boolean;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  enabled: true,
+  densityDissipation: 3.5,
+  velocityDissipation: 2,
+  pressure: 0.1,
+  curl: 3,
+  splatRadius: 0.2,
+  splatForce: 6000,
+  transparent: true,
+});
 
 // What the user is typing
 let typedValue = ref<string[]>([]);
@@ -221,5 +244,16 @@ watch(
     :time="time"
     @restart="restart"
     :elapsed-seconds="elapsedSeconds"
+  />
+
+  <FluidCursor
+    v-if="enabled"
+    :density-dissipation="props.densityDissipation"
+    :velocity-dissipation="props.velocityDissipation"
+    :pressure="props.pressure"
+    :curl="props.curl"
+    :splat-radius="props.splatRadius"
+    :splat-force="props.splatForce"
+    :transparent="props.transparent"
   />
 </template>
