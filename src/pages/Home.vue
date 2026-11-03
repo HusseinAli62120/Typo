@@ -8,6 +8,7 @@ import { captureKeyStroke } from "../utils/captureKeyStroke.ts";
 import Results from "./Results/Results.vue";
 import FluidCursor from "@/components/ui/fluid-cursor/FluidCursor.vue";
 import type { FluidCursorProps } from "@/types/FluidCursor.ts";
+import { getLetterIndex, getWordStartIndex } from "@/utils/getIndexes.ts";
 
 // Fluid Cursor props
 const props = withDefaults(defineProps<FluidCursorProps>(), {
@@ -210,14 +211,6 @@ watch(
   },
   { deep: true },
 );
-
-const getWordStartIndex = (wordIndex: number) => {
-  let start = 0;
-  for (let idx = 0; idx < wordIndex; idx++) {
-    start += words.value[idx].length + 1; // word length + 1 space
-  }
-  return start;
-};
 </script>
 
 <template>
@@ -232,48 +225,116 @@ const getWordStartIndex = (wordIndex: number) => {
         ref="box"
         class="relative w-full min-w-4xl max-w-4xl h-96 text-start text-4xl whitespace-pre-wrap overflow-scroll leading-normal no-scrollbar border"
       >
-        <div class="w-full flex flex-wrap items-start justify-start">
+        <div class="w-full flex flex-wrap justify-start">
+          <!-- Words map -->
           <span
             v-for="(word, wordIndex) in words"
             :key="'w-' + wordIndex"
-            class="inline"
+            class="inline-flex items-center"
           >
             <!-- Letters in the word -->
             <span
-              v-for="(letter, letterIndex) in word.split('')"
-              :key="'l-' + letterIndex"
-              :class="[
-                typedLetters[getWordStartIndex(wordIndex) + letterIndex]
-                  ? isMatchingLowerCase({
-                      letter: letter,
-                      index: getWordStartIndex(wordIndex) + letterIndex,
-                      typedLetters: typedLetters,
-                    })
-                    ? 'text-emerald-600'
-                    : 'text-red-600 underline'
-                  : 'text-foreground',
-                typedLetters.length ===
-                  getWordStartIndex(wordIndex) + letterIndex && 'cursor',
-              ]"
+              v-for="(letter, i) in word.split('')"
+              :key="'l-' + wordIndex + '-' + i"
+              class="inline-flex flex-col items-center"
             >
-              {{ letter }}
+              <!-- Typed letter  -->
+              <span
+                class="text-lg font-mono h-6 flex items-center justify-center select-none"
+                :class="[
+                  // Check if the letter exists, if so, add a color based on if it matches or not
+                  typedLetters[
+                    getLetterIndex({
+                      wordIndex: wordIndex,
+                      letterIndex: i,
+                      words: words,
+                    })
+                  ]
+                    ? isMatchingLowerCase({
+                        index: getLetterIndex({
+                          wordIndex: wordIndex,
+                          letterIndex: i,
+                          words: words,
+                        }),
+                        letter: letter,
+                        typedLetters: typedLetters,
+                      })
+                      ? 'text-emerald-500 font-semibold'
+                      : 'text-red-500 font-semibold'
+                    : 'opacity-0',
+                ]"
+              >
+                {{
+                  typedLetters[
+                    getLetterIndex({
+                      wordIndex: wordIndex,
+                      letterIndex: i,
+                      words: words,
+                    })
+                  ]
+                }}
+              </span>
+
+              <!-- Intended letter  -->
+              <span
+                class="text-4xl"
+                :class="[
+                  // Check if the letter exists, if so, add a color based on if it matches or not
+                  typedLetters[
+                    getLetterIndex({
+                      wordIndex: wordIndex,
+                      letterIndex: i,
+                      words: words,
+                    })
+                  ]
+                    ? isMatchingLowerCase({
+                        index: getLetterIndex({
+                          wordIndex: wordIndex,
+                          letterIndex: i,
+                          words: words,
+                        }),
+                        letter: letter,
+                        typedLetters: typedLetters,
+                      })
+                      ? 'text-emerald-600'
+                      : 'text-red-600'
+                    : 'text-muted-foreground',
+                  // Add cursor to the current letter
+                  typedLetters.length ===
+                    getLetterIndex({
+                      wordIndex: wordIndex,
+                      letterIndex: i,
+                      words: words,
+                    }) && 'cursor',
+                ]"
+              >
+                {{ letter }}
+              </span>
             </span>
 
-            <!-- Spacing element between words -->
+            <!-- Spaces -->
             <span
-              v-if="wordIndex < words.length - 1"
-              class="inline-block relative"
               :class="[
-                typedLetters[getWordStartIndex(wordIndex) + word.length] !==
-                  undefined &&
-                typedLetters[getWordStartIndex(wordIndex) + word.length] !== ' '
+                // Get to the start of the previous word + its length to reach the space
+                typedLetters[
+                  getWordStartIndex({ wordIndex: wordIndex, words: words }) +
+                    word.length
+                ] &&
+                typedLetters[
+                  getWordStartIndex({ wordIndex: wordIndex, words: words }) +
+                    word.length
+                ] !== ' '
                   ? 'bg-red-200'
                   : '',
                 typedLetters.length ===
-                  getWordStartIndex(wordIndex) + word.length && 'cursor',
+                  getWordStartIndex({ wordIndex: wordIndex, words: words }) +
+                    word.length && 'cursor',
               ]"
-              >&nbsp;</span
+              v-if="wordIndex <= words.length - 1"
             >
+              <!-- Add spaces between words except the last word -->
+              {{ "" }}
+            </span>
           </span>
         </div>
       </div>

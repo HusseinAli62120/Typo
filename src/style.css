@@ -150,13 +150,13 @@
 
 /* The flickering typing cursor */
 .cursor {
-  @apply relative inline;
+  @apply relative inline bottom-0;
 }
 
 .cursor::before {
   content: "";
   position: absolute;
-  @apply absolute left-0 w-0.5 top-2 bg-black;
+  @apply absolute left-0 w-0.5 bottom-0 bg-black;
   height: 1em;
   animation: blink 1s steps(1) infinite;
 }
