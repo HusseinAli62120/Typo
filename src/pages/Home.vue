@@ -7,19 +7,10 @@ import { generate } from "random-words";
 import { captureKeyStroke } from "../utils/captureKeyStroke.ts";
 import Results from "./Results/Results.vue";
 import FluidCursor from "@/components/ui/fluid-cursor/FluidCursor.vue";
+import type { FluidCursorProps } from "@/types/FluidCursor.ts";
 
-interface Props {
-  enabled?: boolean;
-  densityDissipation?: number;
-  velocityDissipation?: number;
-  pressure?: number;
-  curl?: number;
-  splatRadius?: number;
-  splatForce?: number;
-  transparent?: boolean;
-}
-
-const props = withDefaults(defineProps<Props>(), {
+// Fluid Cursor props
+const props = withDefaults(defineProps<FluidCursorProps>(), {
   enabled: true,
   densityDissipation: 3.5,
   velocityDissipation: 2,
@@ -94,7 +85,8 @@ const restart = () => {
   startTime.value = null;
   endTime.value = null;
   isDone.value = false;
-  text.value = generate(30) as string[];
+  text.value = generate(15) as string[];
+  getLetters({ text: text.value });
 };
 
 const stopTimers = () => {
@@ -136,7 +128,7 @@ watch(
 
 // Generate words & get their letters
 onMounted(() => {
-  text.value = generate(30) as string[];
+  text.value = generate(15) as string[];
   getLetters({ text: text.value });
 });
 
