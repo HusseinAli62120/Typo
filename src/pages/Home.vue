@@ -210,6 +210,14 @@ watch(
   },
   { deep: true },
 );
+
+const getWordStartIndex = (wordIndex: number) => {
+  let start = 0;
+  for (let idx = 0; idx < wordIndex; idx++) {
+    start += words.value[idx].length + 1; // word length + 1 space
+  }
+  return start;
+};
 </script>
 
 <template>
@@ -219,35 +227,55 @@ watch(
     <Navbar />
 
     <!-- Content -->
-    <div class="flex-1 flex flex-col justify-center items-start py-20">
-      <button
-        @click="
-          () => {
-            console.log(typedWords);
-          }
-        "
-      >
-        Click Me
-      </button>
+    <div class="flex-1 w-full flex flex-col justify-center items-center py-20">
       <div
         ref="box"
-        class="relative w-full max-w-4xl text-start text-4xl whitespace-pre-wrap h-96 overflow-scroll leading-normal no-scrollbar"
+        class="relative w-full min-w-4xl max-w-4xl h-96 text-start text-4xl whitespace-pre-wrap overflow-scroll leading-normal no-scrollbar border"
       >
-        <span
-          v-for="(char, index) in letters"
-          :key="index"
-          :class="[
-            typedLetters[index]
-              ? isMatchingLowerCase({ char, index, typedLetters })
-                ? 'text-emerald-600'
-                : char === ' '
+        <div class="w-full flex flex-wrap items-start justify-start">
+          <span
+            v-for="(word, wordIndex) in words"
+            :key="'w-' + wordIndex"
+            class="inline"
+          >
+            <!-- Letters in the word -->
+            <span
+              v-for="(letter, letterIndex) in word.split('')"
+              :key="'l-' + letterIndex"
+              :class="[
+                typedLetters[getWordStartIndex(wordIndex) + letterIndex]
+                  ? isMatchingLowerCase({
+                      letter: letter,
+                      index: getWordStartIndex(wordIndex) + letterIndex,
+                      typedLetters: typedLetters,
+                    })
+                    ? 'text-emerald-600'
+                    : 'text-red-600 underline'
+                  : 'text-foreground',
+                typedLetters.length ===
+                  getWordStartIndex(wordIndex) + letterIndex && 'cursor',
+              ]"
+            >
+              {{ letter }}
+            </span>
+
+            <!-- Spacing element between words -->
+            <span
+              v-if="wordIndex < words.length - 1"
+              class="inline-block relative"
+              :class="[
+                typedLetters[getWordStartIndex(wordIndex) + word.length] !==
+                  undefined &&
+                typedLetters[getWordStartIndex(wordIndex) + word.length] !== ' '
                   ? 'bg-red-200'
-                  : 'text-red-600 underline'
-              : 'text-foreground',
-            typedLetters.length === index && 'cursor',
-          ]"
-          >{{ char }}</span
-        >
+                  : '',
+                typedLetters.length ===
+                  getWordStartIndex(wordIndex) + word.length && 'cursor',
+              ]"
+              >&nbsp;</span
+            >
+          </span>
+        </div>
       </div>
 
       <div class="flex flex-row justify-center gap-5">
