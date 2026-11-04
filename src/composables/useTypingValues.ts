@@ -125,10 +125,11 @@ export default function useTypingValues() {
 
     // when mode is time
     if (mode.value === "time" && countdownTimer.value === undefined) {
-      // Countdown
+      // Decrement the timer and generate more words to ensure the user never runs out of words
       countdownTimer.value = setInterval(() => {
+        // In time mode, initally 60 words and 10 every second
+        generateWords({ selectedQuantity: 10 });
         countdown.value -= 1;
-        console.log(countdown.value);
 
         // Check if finished (This is in the interval because the function executes on keystroke,
         // and when the time reaches 0, no one will click, so, if the check is in the function, we will never
@@ -142,7 +143,7 @@ export default function useTypingValues() {
           graphArray.value.push(wpm.value);
           setTimeout(() => {
             isDone.value = true;
-          }, 200);
+          }, 100);
         }
       }, 1000);
     }
@@ -158,7 +159,7 @@ export default function useTypingValues() {
       stopTimers();
       setTimeout(() => {
         isDone.value = true;
-      }, 200);
+      }, 100);
     }
   };
 
@@ -178,8 +179,6 @@ export default function useTypingValues() {
     if (!repeat) {
       words.value = [];
       letters.value = [];
-      words.value = generate(quantity.value) as string[];
-      getLetters({ words: words.value, letters: letters.value });
     }
   };
 
@@ -189,7 +188,9 @@ export default function useTypingValues() {
   }: {
     selectedQuantity?: number;
   }) => {
-    words.value = generate(selectedQuantity ?? quantity.value) as string[];
+    words.value = words.value.concat(
+      generate(selectedQuantity ?? quantity.value) as string[],
+    );
     getLetters({ words: words.value, letters: letters.value });
   };
 

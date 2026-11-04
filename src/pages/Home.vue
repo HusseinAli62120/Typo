@@ -54,6 +54,7 @@ const {
   stopTimers,
   restart,
   generateWords,
+  countdown,
 } = useTypingValues();
 
 // Reference to the text box
@@ -70,7 +71,11 @@ watch(
 
 // Generate words & get their letters
 onMounted(() => {
-  generateWords({});
+  if (mode.value === "words") {
+    generateWords({});
+  } else {
+    generateWords({ selectedQuantity: 60 });
+  }
 });
 
 // Capture key strokes
@@ -146,6 +151,11 @@ onKeyStroke(["c", "C"], (e) => {
   if (e.ctrlKey) {
     e.preventDefault();
     restart({});
+    if (mode.value === "words") {
+      generateWords({});
+    } else {
+      generateWords({ selectedQuantity: 60 });
+    }
   }
 });
 
@@ -170,7 +180,19 @@ onKeyStroke(["r", "R"], (e) => {
     >
       <div class="w-full max-w-4xl flex flex-row justify-between">
         <div class="flex flex-row items-center space-x-5 w-full">
-          <Tabs v-model="mode">
+          <Tabs
+            @update:model-value="
+              (value) => {
+                restart({});
+                if (value === 'words') {
+                  generateWords({ selectedQuantity: quantity });
+                } else {
+                  generateWords({ selectedQuantity: 60 });
+                }
+              }
+            "
+            v-model="mode"
+          >
             <TabsList>
               <TabsTrigger
                 v-for="value in modes"
@@ -187,7 +209,13 @@ onKeyStroke(["r", "R"], (e) => {
           <Tabs
             @update:model-value="
               (value) => {
-                generateWords({ selectedQuantity: Number(value) });
+                restart({});
+                countdown = Number(value);
+                if (mode === 'words') {
+                  generateWords({ selectedQuantity: Number(value) });
+                } else {
+                  generateWords({ selectedQuantity: 60 });
+                }
               }
             "
             v-model="quantity"
@@ -202,13 +230,16 @@ onKeyStroke(["r", "R"], (e) => {
               </TabsTrigger>
             </TabsList>
           </Tabs>
-          {{ time }}
+          <p v-if="mode === 'time'" class="text-lg">{{ time }}</p>
+          <p v-else class="text-lg">
+            {{ `${typedWords.length}/${words.length}` }}
+          </p>
         </div>
       </div>
       <!-- Typing box -->
       <div
         ref="box"
-        class="relative w-full min-w-4xl max-w-4xl h-96 text-start text-4xl whitespace-pre-wrap overflow-scroll leading-normal no-scrollbar border"
+        class="relative w-full min-w-4xl max-w-4xl h-52 text-start text-4xl whitespace-pre-wrap overflow-scroll leading-normal no-scrollbar border"
       >
         <div class="w-full flex flex-wrap justify-start">
           <!-- Words map -->
