@@ -35,17 +35,26 @@ export default function useTypingValues() {
 
   const elapsedSeconds = computed(() => {
     if (startTime.value === null) return 0;
+    if (mode.value === "time") {
+      // If done, simple return the duration selected
+      if (isDone.value || countdown.value <= 0) return quantity.value;
+      const elapsed = Math.floor(
+        ((endTime.value ?? now.value) - startTime.value) / 1000,
+      );
+      // In time mode, make sure that elapsedSeconds don't go over the duration(quantity) selected
+      return Math.min(elapsed, quantity.value);
+    }
     // Divided by 1000 since they are in milliseconds
     return Math.floor(((endTime.value ?? now.value) - startTime.value) / 1000);
   });
 
   // Time shown
   const time = computed(() => {
-    // Choose whether the seconds are couup (words mode) or counted down (time mode)nted
+    // Choose whether the seconds are couted up (words mode) or counted down (time mode)
     const selectedSeconds =
-      mode.value === "words"
+      mode.value === "words" || isDone.value
         ? elapsedSeconds.value
-        : Math.max(countdown.value, 0); // Edge cases where it goes to -1 This prevents that
+        : Math.max(countdown.value, 0);
 
     // Get minutes and format
     const minutes = `${Math.floor(selectedSeconds / 60)}`;
@@ -68,8 +77,14 @@ export default function useTypingValues() {
 
   // Words per minutes
   const wpm = computed(() => {
+    // In time mode when finished, strictly use the selected duration
+    const seconds =
+      mode.value === "time" && (isDone.value || countdown.value <= 0)
+        ? quantity.value
+        : elapsedSeconds.value;
+
     // floor at 1 second so the first keystrokes don't show a huge spike
-    const minutes = Math.max(elapsedSeconds.value / 60, 1 / 60);
+    const minutes = Math.max(seconds / 60, 1 / 60);
     return startTime.value
       ? Math.round(correctCharacters.value / 5 / minutes)
       : 0;
@@ -115,32 +130,33 @@ export default function useTypingValues() {
       timer.value = window.setInterval(() => (now.value = Date.now()), 250);
     }
 
-    // If graph timer is not started, start it
-    if (graphTimer.value === undefined) {
+    // In words mode, graphTimer records WPM every second (Since we don't have a countdown timer)
+    if (mode.value === "words" && graphTimer.value === undefined) {
       // Record WPM every second
       graphTimer.value = window.setInterval(() => {
         graphArray.value.push(wpm.value);
       }, 1000);
     }
 
-    // when mode is time
+    // When mode is time, countdownTimer manages countdown and graphArray entries
     if (mode.value === "time" && countdownTimer.value === undefined) {
-      // Decrement the timer and generate more words to ensure the user never runs out of words
-      countdownTimer.value = setInterval(() => {
-        // In time mode, initally 60 words and 10 every second
-        generateWords({ selectedQuantity: 10 });
+      countdownTimer.value = window.setInterval(() => {
         countdown.value -= 1;
 
-        // Check if finished (This is in the interval because the function executes on keystroke,
-        // and when the time reaches 0, no one will click, so, if the check is in the function, we will never
-        // reach the results page
-        if (mode.value === "time" && countdown.value <= 0) {
+        // Record WPM entry every second, capped to quantity selected
+        if (graphArray.value.length < quantity.value) {
+          graphArray.value.push(wpm.value);
+        }
+
+        // Generate more words to ensure user never runs out of words
+        generateWords({ selectedQuantity: 10 });
+
+        // Check if finished
+        if (countdown.value <= 0) {
           // Update endTime (wpm calc) and stop the timers
           endTime.value = Date.now();
           stopTimers();
 
-          // Push the final wpm value
-          graphArray.value.push(wpm.value);
           setTimeout(() => {
             isDone.value = true;
           }, 100);
