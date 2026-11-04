@@ -20,6 +20,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LucideClock, LucideLetters } from "@lucide/vue";
 import type { Mode } from "@/types/Mode.ts";
 import type { Quantity } from "@/types/Quantity.ts";
+import Progress from "@/components/ui/progress/Progress.vue";
 
 // Fluid Cursor props
 const props = withDefaults(defineProps<FluidCursorProps>(), {
@@ -55,6 +56,7 @@ const {
   restart,
   generateWords,
   countdown,
+  progress,
 } = useTypingValues();
 
 // Reference to the text box
@@ -176,9 +178,10 @@ onKeyStroke(["r", "R"], (e) => {
 
     <!-- Content -->
     <div
-      class="flex-1 w-full flex flex-col justify-center items-center py-20 space-y-5"
+      class="flex-1 w-full flex flex-col justify-center items-center py-20 space-y-5 px-10"
     >
-      <div class="w-full max-w-4xl flex flex-row justify-between">
+      <!-- Indicators & Tabs -->
+      <div class="w-full max-w-7xl flex flex-row justify-between px-10">
         <div class="flex flex-row items-center space-x-5 w-full">
           <Tabs
             @update:model-value="
@@ -239,7 +242,7 @@ onKeyStroke(["r", "R"], (e) => {
       <!-- Typing box -->
       <div
         ref="box"
-        class="relative w-full min-w-4xl max-w-4xl h-52 text-start text-4xl whitespace-pre-wrap overflow-scroll leading-normal no-scrollbar border"
+        class="relative w-full min-w-4xl max-w-7xl h-52 text-start text-4xl whitespace-pre-wrap overflow-scroll leading-normal no-scrollbar border px-10"
       >
         <div class="w-full flex flex-wrap justify-start">
           <!-- Words map -->
@@ -355,8 +358,9 @@ onKeyStroke(["r", "R"], (e) => {
         </div>
       </div>
 
+      <Progress class="w-full max-w-7xl" :model-value="progress" />
       <!-- Time & Icons -->
-      <div class="flex flex-row justify-between w-full max-w-4xl gap-5">
+      <div class="flex flex-row justify-between w-full max-w-7xl gap-5">
         <Tooltip>
           <TooltipTrigger as-child>
             <Repeat

@@ -33,6 +33,15 @@ export default function useTypingValues() {
   let graphArray = ref<number[]>([]);
   let graphTimer = ref<number | undefined>(undefined);
 
+  // Progress
+  let progress = computed(() => {
+    if (mode.value === "time") {
+      return ((quantity.value - countdown.value) / quantity.value) * 100;
+    } else {
+      return (typedWords.value.length / words.value.length) * 100;
+    }
+  });
+
   const elapsedSeconds = computed(() => {
     if (startTime.value === null) return 0;
     if (mode.value === "time") {
@@ -235,5 +244,6 @@ export default function useTypingValues() {
     countdownTimer,
     restart,
     generateWords,
+    progress,
   };
 }
