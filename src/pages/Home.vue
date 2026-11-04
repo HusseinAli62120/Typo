@@ -1,9 +1,7 @@
 <script lang="ts" setup>
 import { nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import Navbar from "../components/Nav/Navbar.vue";
-import getLetters from "../utils/getLetters.ts";
 import isMatchingLowerCase from "../utils/isMatchingLowerCase.ts";
-import { generate } from "random-words";
 import { captureKeyStroke } from "../utils/captureKeyStroke.ts";
 import Results from "./Results/Results.vue";
 import FluidCursor from "@/components/ui/fluid-cursor/FluidCursor.vue";
@@ -11,13 +9,17 @@ import type { FluidCursorProps } from "@/types/FluidCursor.ts";
 import { getLetterIndex, getWordStartIndex } from "@/utils/getIndexes.ts";
 import useTypingValues from "@/composables/useTypingValues.ts";
 import Repeat from "@/components/animate-ui/icons/Repeat.vue";
+import ArrowRight from "@/components/animate-ui/icons/ArrowRight.vue";
+import { onKeyStroke } from "@vueuse/core";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { onKeyStroke } from "@vueuse/core";
-import ArrowRight from "@/components/animate-ui/icons/ArrowRight.vue";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LucideClock, LucideLetters } from "@lucide/vue";
+import type { Mode } from "@/types/Mode.ts";
+import type { Quantity } from "@/types/Quantity.ts";
 
 // Fluid Cursor props
 const props = withDefaults(defineProps<FluidCursorProps>(), {
@@ -31,11 +33,17 @@ const props = withDefaults(defineProps<FluidCursorProps>(), {
   transparent: true,
 });
 
+// Tab values (so not to repeat the code for each entry)
+const modes: Mode[] = ["time", "words"];
+const quantities: Quantity[] = [15, 30, 60, 120, 300];
+
 const {
   words,
   letters,
   typedWords,
   typedLetters,
+  mode,
+  quantity,
   graphArray,
   time,
   elapsedSeconds,
@@ -45,12 +53,13 @@ const {
   startTimers,
   stopTimers,
   restart,
+  generateWords,
 } = useTypingValues();
 
 // Reference to the text box
 const box = ref<HTMLElement | null>(null);
 
-// Start & record time
+// Start & record time on first key stroke
 watch(
   typedLetters,
   (value) => {
@@ -61,8 +70,7 @@ watch(
 
 // Generate words & get their letters
 onMounted(() => {
-  words.value = generate(15) as string[];
-  getLetters({ words: words.value, letters: letters.value });
+  generateWords({});
 });
 
 // Capture key strokes
@@ -157,7 +165,46 @@ onKeyStroke(["r", "R"], (e) => {
     <Navbar />
 
     <!-- Content -->
-    <div class="flex-1 w-full flex flex-col justify-center items-center py-20">
+    <div
+      class="flex-1 w-full flex flex-col justify-center items-center py-20 space-y-5"
+    >
+      <div class="w-full max-w-4xl flex flex-row justify-between">
+        <div class="flex flex-row items-center space-x-5 w-full">
+          <Tabs v-model="mode">
+            <TabsList>
+              <TabsTrigger
+                v-for="value in modes"
+                class="dark:data-[state=active]:bg-background"
+                :value="value"
+              >
+                <LucideClock v-if="value === 'time'" />
+                <LucideLetters v-else />
+                {{ `${value.charAt(0).toUpperCase()}${value.slice(1)}` }}
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          <Tabs
+            @update:model-value="
+              (value) => {
+                generateWords({ selectedQuantity: Number(value) });
+              }
+            "
+            v-model="quantity"
+          >
+            <TabsList>
+              <TabsTrigger
+                v-for="value in quantities"
+                class="dark:data-[state=active]:bg-background"
+                :value="value"
+              >
+                {{ value }}
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          {{ time }}
+        </div>
+      </div>
       <!-- Typing box -->
       <div
         ref="box"
