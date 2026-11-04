@@ -28,8 +28,16 @@ export const captureKeyStroke = ({
 
   const isSpace = expectedCharacter === " ";
 
-  // Return special commands
+  // Check if the key is allowed
   if (!allowedKeys.includes(e.key)) return;
+  // Check for command keys
+  else if (e.ctrlKey) {
+    // Repeat or restart keys
+    if (e.key === "c" || e.key === "C" || e.key === "r" || e.key === "R") {
+      currentWord.value = "";
+      return;
+    }
+  }
   // Delete on backspace
   else if (e.key === "Backspace") {
     // Nothing to delete

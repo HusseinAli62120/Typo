@@ -10,6 +10,14 @@ import FluidCursor from "@/components/ui/fluid-cursor/FluidCursor.vue";
 import type { FluidCursorProps } from "@/types/FluidCursor.ts";
 import { getLetterIndex, getWordStartIndex } from "@/utils/getIndexes.ts";
 import useTypingValues from "@/composables/useTypingValues.ts";
+import Repeat from "@/components/animate-ui/icons/Repeat.vue";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { onKeyStroke } from "@vueuse/core";
+import ArrowRight from "@/components/animate-ui/icons/ArrowRight.vue";
 
 // Fluid Cursor props
 const props = withDefaults(defineProps<FluidCursorProps>(), {
@@ -31,7 +39,6 @@ const {
   graphArray,
   time,
   elapsedSeconds,
-  correctCharacters,
   wpm,
   accuracy,
   isDone,
@@ -125,6 +132,22 @@ watch(
   },
   { deep: true },
 );
+
+// Restart on ctrl+c
+onKeyStroke(["c", "C"], (e) => {
+  if (e.ctrlKey) {
+    e.preventDefault();
+    restart({});
+  }
+});
+
+// Repeat on ctrl+r
+onKeyStroke(["r", "R"], (e) => {
+  if (e.ctrlKey) {
+    e.preventDefault();
+    restart({ repeat: true });
+  }
+});
 </script>
 
 <template>
@@ -135,6 +158,7 @@ watch(
 
     <!-- Content -->
     <div class="flex-1 w-full flex flex-col justify-center items-center py-20">
+      <!-- Typing box -->
       <div
         ref="box"
         class="relative w-full min-w-4xl max-w-4xl h-96 text-start text-4xl whitespace-pre-wrap overflow-scroll leading-normal no-scrollbar border"
@@ -253,10 +277,31 @@ watch(
         </div>
       </div>
 
-      <div class="flex flex-row justify-center gap-5">
-        <p>wpm:{{ wpm }}</p>
-        <p>Time:{{ time }}</p>
-        <p>correctCharacters:{{ correctCharacters }}</p>
+      <!-- Time & Icons -->
+      <div class="flex flex-row justify-between w-full max-w-4xl gap-5">
+        <Tooltip>
+          <TooltipTrigger as-child>
+            <Repeat
+              animate-on-hover
+              @click="restart({ repeat: true })"
+              class="w-5"
+            />
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Repeat</TooltipContent>
+        </Tooltip>
+
+        <!-- Next -->
+        <Tooltip>
+          <TooltipTrigger as-child>
+            <ArrowRight
+              animate-on-hover
+              @click="restart({ repeat: false })"
+              class="w-5"
+            />
+          </TooltipTrigger>
+
+          <TooltipContent side="bottom">Next</TooltipContent>
+        </Tooltip>
       </div>
     </div>
   </div>
@@ -267,7 +312,7 @@ watch(
     :wpm-array="graphArray"
     :accuracy="accuracy"
     :time="time"
-    @restart="restart"
+    @restart="restart({})"
     :elapsed-seconds="elapsedSeconds"
     :correct-words="typedWords"
   />

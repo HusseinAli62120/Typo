@@ -1,6 +1,10 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { TooltipProvider } from "./components/ui/tooltip";
+</script>
 
 <!-- Body -->
 <template>
-  <RouterView />
+  <TooltipProvider>
+    <RouterView />
+  </TooltipProvider>
 </template>

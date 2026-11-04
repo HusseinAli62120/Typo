@@ -104,21 +104,23 @@ export default function useTypingValues() {
   };
 
   //   Restart
-  const restart = () => {
+  const restart = ({ repeat = false }: { repeat?: boolean }) => {
     stopTimers();
     typedLetters.value = [];
     graphArray.value = [];
     typedWords.value = [];
-    words.value = [];
-    letters.value = [];
     now.value = Date.now();
     startTime.value = null;
     endTime.value = null;
     isDone.value = false;
 
-    // Generate new words
-    words.value = generate(15) as string[];
-    getLetters({ words: words.value, letters: letters.value });
+    // Generate new words only on restart, not on repeat
+    if (!repeat) {
+      words.value = [];
+      letters.value = [];
+      words.value = generate(15) as string[];
+      getLetters({ words: words.value, letters: letters.value });
+    }
   };
 
   return {
