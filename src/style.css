@@ -141,7 +141,7 @@
 }
 
 .screen {
-  @apply w-full h-screen flex flex-col items-center justify-center relative;
+  @apply w-full h-screen flex flex-col items-center justify-center relative bg-muted/50;
 }
 
 * {

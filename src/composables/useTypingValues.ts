@@ -15,7 +15,7 @@ export default function useTypingValues() {
 
   // Modes
   let mode = ref<Mode>("time");
-  let quantity = ref<Quantity>(15);
+  let quantity = ref<Quantity>(30);
 
   // Times
 

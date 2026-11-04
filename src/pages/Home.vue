@@ -37,7 +37,7 @@ const props = withDefaults(defineProps<FluidCursorProps>(), {
 
 // Tab values (so not to repeat the code for each entry)
 const modes: Mode[] = ["time", "words"];
-const quantities: Quantity[] = [15, 30, 60, 120, 300];
+const quantities: Quantity[] = [1, 30, 60, 120, 300];
 
 const {
   words,
@@ -58,6 +58,7 @@ const {
   generateWords,
   countdown,
   progress,
+  correctCharacters,
 } = useTypingValues();
 
 let started = computed(() => {
@@ -183,7 +184,7 @@ onKeyStroke(["r", "R"], (e) => {
 
     <!-- Content -->
     <div
-      class="flex-1 w-full bg-muted/50 flex flex-col justify-start items-center py-20 space-y-5"
+      class="flex-1 w-full flex flex-col justify-start items-center py-20 space-y-5"
     >
       <!-- Punctuation & Tabs -->
       <div
@@ -450,9 +451,20 @@ onKeyStroke(["r", "R"], (e) => {
     :wpm-array="graphArray"
     :accuracy="accuracy"
     :time="time"
-    @restart="restart({})"
+    @restart="
+      () => {
+        restart({});
+        if (mode === 'time') {
+          generateWords({ selectedQuantity: 60 });
+        } else {
+          generateWords({});
+        }
+      }
+    "
     :elapsed-seconds="elapsedSeconds"
-    :correct-words="typedWords"
+    :correct-words="typedWords.length"
+    :correct-characters="correctCharacters"
+    :total-characters="typedLetters.length"
   />
 
   <FluidCursor
