@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
+import { nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import Navbar from "../components/Nav/Navbar.vue";
 import getLetters from "../utils/getLetters.ts";
 import isMatchingLowerCase from "../utils/isMatchingLowerCase.ts";
@@ -9,6 +9,7 @@ import Results from "./Results/Results.vue";
 import FluidCursor from "@/components/ui/fluid-cursor/FluidCursor.vue";
 import type { FluidCursorProps } from "@/types/FluidCursor.ts";
 import { getLetterIndex, getWordStartIndex } from "@/utils/getIndexes.ts";
+import useTypingValues from "@/composables/useTypingValues.ts";
 
 // Fluid Cursor props
 const props = withDefaults(defineProps<FluidCursorProps>(), {
@@ -22,116 +23,31 @@ const props = withDefaults(defineProps<FluidCursorProps>(), {
   transparent: true,
 });
 
-// What the user is typing
-let typedLetters = ref<string[]>([]);
-let typedWords = ref<string[]>([]);
-
-// The text to type
-let words = ref<string[]>([]);
-let letters = ref<string[]>([]);
+const {
+  words,
+  letters,
+  typedWords,
+  typedLetters,
+  graphArray,
+  time,
+  elapsedSeconds,
+  correctCharacters,
+  wpm,
+  accuracy,
+  isDone,
+  startTimers,
+  stopTimers,
+  restart,
+} = useTypingValues();
 
 // Reference to the text box
 const box = ref<HTMLElement | null>(null);
-
-// Stats
-const startTime = ref<number | null>(null);
-const endTime = ref<number | null>(null);
-const now = ref(Date.now());
-let timer: number | undefined;
-const graphArray = ref<number[]>([]);
-let graphTimer: number | undefined;
-
-// Done flag
-let isDone = ref<boolean>(false);
-
-const elapsedSeconds = computed(() => {
-  if (startTime.value === null) return 0;
-  // Divided by 1000 since they are in milliseconds
-  return Math.floor(((endTime.value ?? now.value) - startTime.value) / 1000);
-});
-
-const time = computed(() => {
-  const minutes = `${Math.floor(elapsedSeconds.value / 60)}`;
-  const seconds = `${Math.floor(elapsedSeconds.value % 60)
-    .toString()
-    .padStart(2, "0")}`;
-  return `${minutes}:${seconds}`;
-});
-
-const correctCharacters = computed(() => {
-  let count = 0;
-  for (let i = 0; i < typedLetters.value.length; i++) {
-    if (typedLetters.value[i] === letters.value[i]) count++;
-  }
-  return count;
-});
-
-const wpm = computed(() => {
-  // floor at 1 second so the first keystrokes don't show a huge spike
-  const minutes = Math.max(elapsedSeconds.value / 60, 1 / 60);
-  return startTime.value
-    ? Math.round(correctCharacters.value / 5 / minutes)
-    : 0;
-});
-
-const accuracy = computed(() =>
-  typedLetters.value.length
-    ? Math.round((correctCharacters.value / typedLetters.value.length) * 100)
-    : 100,
-);
-
-const restart = () => {
-  stopTimers();
-  typedLetters.value = [];
-  graphArray.value = [];
-  typedWords.value = [];
-  words.value = [];
-  letters.value = [];
-  now.value = Date.now();
-  startTime.value = null;
-  endTime.value = null;
-  isDone.value = false;
-
-  // Generate new words
-  words.value = generate(15) as string[];
-  getLetters({ words: words.value, letters: letters.value });
-};
-
-const stopTimers = () => {
-  clearInterval(timer);
-  clearInterval(graphTimer);
-  timer = undefined;
-  graphTimer = undefined;
-};
 
 // Start & record time
 watch(
   typedLetters,
   (value) => {
-    // First keystroke starts the clock
-    if (typedLetters.value.length === 0) return;
-
-    if (startTime.value === null) {
-      startTime.value = Date.now();
-      now.value = startTime.value;
-
-      // Update "now" value every 250ms
-      timer = window.setInterval(() => (now.value = Date.now()), 250);
-
-      // Record WPM every second
-      graphTimer = window.setInterval(() => {
-        graphArray.value.push(wpm.value);
-      }, 1000);
-    }
-
-    // Finished the text: freeze the clock
-    if (value.length >= letters.value.length && endTime.value === null) {
-      endTime.value = Date.now();
-      stopTimers();
-      setTimeout(() => {
-        isDone.value = true;
-      }, 200);
-    }
+    startTimers({ currentTypedLetters: value });
   },
   { deep: true },
 );
@@ -150,7 +66,6 @@ onMounted(() => {
       typedLetters: typedLetters.value,
       letters: letters.value,
       typedWords: typedWords.value,
-      words: words.value,
     });
   });
 });
@@ -163,7 +78,6 @@ onUnmounted(() => {
       typedLetters: typedLetters.value,
       letters: letters.value,
       typedWords: typedWords.value,
-      words: words.value,
     });
   });
 

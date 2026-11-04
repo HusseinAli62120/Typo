@@ -13,7 +13,6 @@ export const captureKeyStroke = ({
   typedLetters: string[];
   letters: string[];
   typedWords: string[];
-  words: string[];
 }) => {
   // Stop if done typing
   if (typedLetters.length >= letters.length) return;
