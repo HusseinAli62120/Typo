@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { nextTick, onMounted, onUnmounted, ref, watch } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import Navbar from "../components/Nav/Navbar.vue";
 import isMatchingLowerCase from "../utils/isMatchingLowerCase.ts";
 import { captureKeyStroke } from "../utils/captureKeyStroke.ts";
@@ -9,7 +9,8 @@ import type { FluidCursorProps } from "@/types/FluidCursor.ts";
 import { getLetterIndex, getWordStartIndex } from "@/utils/getIndexes.ts";
 import useTypingValues from "@/composables/useTypingValues.ts";
 import Repeat from "@/components/animate-ui/icons/Repeat.vue";
-import ArrowRight from "@/components/animate-ui/icons/ArrowRight.vue";
+import Restart from "@/components/animate-ui/icons/RotateCcw.vue";
+
 import { onKeyStroke } from "@vueuse/core";
 import {
   Tooltip,
@@ -58,6 +59,10 @@ const {
   countdown,
   progress,
 } = useTypingValues();
+
+let started = computed(() => {
+  return typedLetters.value.length > 0;
+});
 
 // Reference to the text box
 const box = ref<HTMLElement | null>(null);
@@ -178,212 +183,263 @@ onKeyStroke(["r", "R"], (e) => {
 
     <!-- Content -->
     <div
-      class="flex-1 w-full flex flex-col justify-center items-center py-20 space-y-5 px-10"
+      class="flex-1 w-full bg-muted/50 flex flex-col justify-start items-center py-20 space-y-5"
     >
-      <!-- Indicators & Tabs -->
-      <div class="w-full max-w-7xl flex flex-row justify-between px-10">
-        <div class="flex flex-row items-center space-x-5 w-full">
-          <Tabs
-            @update:model-value="
-              (value) => {
-                restart({});
-                if (value === 'words') {
-                  generateWords({ selectedQuantity: quantity });
-                } else {
-                  generateWords({ selectedQuantity: 60 });
-                }
-              }
-            "
-            v-model="mode"
-          >
-            <TabsList>
-              <TabsTrigger
-                v-for="value in modes"
-                class="dark:data-[state=active]:bg-background"
-                :value="value"
-              >
-                <LucideClock v-if="value === 'time'" />
-                <LucideLetters v-else />
-                {{ `${value.charAt(0).toUpperCase()}${value.slice(1)}` }}
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-
-          <Tabs
-            @update:model-value="
-              (value) => {
-                restart({});
-                countdown = Number(value);
-                if (mode === 'words') {
-                  generateWords({ selectedQuantity: Number(value) });
-                } else {
-                  generateWords({ selectedQuantity: 60 });
-                }
-              }
-            "
-            v-model="quantity"
-          >
-            <TabsList>
-              <TabsTrigger
-                v-for="value in quantities"
-                class="dark:data-[state=active]:bg-background"
-                :value="value"
-              >
-                {{ value }}
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <p v-if="mode === 'time'" class="text-lg">{{ time }}</p>
-          <p v-else class="text-lg">
-            {{ `${typedWords.length}/${words.length}` }}
-          </p>
-        </div>
-      </div>
-      <!-- Typing box -->
+      <!-- Punctuation & Tabs -->
       <div
-        ref="box"
-        class="relative w-full min-w-4xl max-w-7xl h-52 text-start text-4xl whitespace-pre-wrap overflow-scroll leading-normal no-scrollbar border px-10"
+        class="w-full max-w-7xl flex flex-row justify-between space-x-5 px-10"
       >
-        <div class="w-full flex flex-wrap justify-start">
-          <!-- Words map -->
-          <span
-            v-for="(word, wordIndex) in words"
-            :key="'w-' + wordIndex"
-            class="inline-flex items-center"
-          >
-            <!-- Letters in the word -->
-            <span
-              v-for="(letter, i) in word.split('')"
-              :key="'l-' + wordIndex + '-' + i"
-              class="inline-flex flex-col items-center"
-            >
-              <!-- Typed letter  -->
-              <span
-                class="text-lg font-mono h-6 flex items-center justify-center select-none"
-                :class="[
-                  // Check if the letter exists, if so, add a color based on if it matches or not
-                  typedLetters[
-                    getLetterIndex({
-                      wordIndex: wordIndex,
-                      letterIndex: i,
-                      words: words,
-                    })
-                  ]
-                    ? isMatchingLowerCase({
-                        index: getLetterIndex({
-                          wordIndex: wordIndex,
-                          letterIndex: i,
-                          words: words,
-                        }),
-                        letter: letter,
-                        typedLetters: typedLetters,
-                      })
-                      ? 'text-emerald-500 font-semibold'
-                      : 'text-red-500 font-semibold'
-                    : 'opacity-0',
-                ]"
+        <!-- Tabs -->
+        <div
+          class="grid transition-all duration-500 ease-out motion-reduce:transition-none"
+          :class="
+            started
+              ? 'grid-cols-[0fr] opacity-0 blur-sm -translate-y-1 pointer-events-none'
+              : 'grid-cols-[1fr] opacity-100 blur-none translate-y-0'
+          "
+        >
+          <div class="min-w-0 overflow-hidden">
+            <div class="flex flex-row items-center space-x-5 pr-5">
+              <!-- Mode toggle -->
+              <Tabs
+                @update:model-value="
+                  (value) => {
+                    restart({});
+                    if (value === 'words') {
+                      generateWords({ selectedQuantity: quantity });
+                    } else {
+                      generateWords({ selectedQuantity: 60 });
+                    }
+                  }
+                "
+                v-model="mode"
               >
-                {{
-                  typedLetters[
-                    getLetterIndex({
-                      wordIndex: wordIndex,
-                      letterIndex: i,
-                      words: words,
-                    })
-                  ]
-                }}
-              </span>
+                <TabsList>
+                  <TabsTrigger
+                    v-for="value in modes"
+                    class="dark:data-[state=active]:bg-background"
+                    :value="value"
+                  >
+                    <LucideClock v-if="value === 'time'" />
+                    <LucideLetters v-else />
+                    {{ `${value.charAt(0).toUpperCase()}${value.slice(1)}` }}
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
 
-              <!-- Intended letter  -->
-              <span
-                class="text-4xl"
-                :class="[
-                  // Check if the letter exists, if so, add a color based on if it matches or not
-                  typedLetters[
-                    getLetterIndex({
-                      wordIndex: wordIndex,
-                      letterIndex: i,
-                      words: words,
-                    })
-                  ]
-                    ? isMatchingLowerCase({
-                        index: getLetterIndex({
-                          wordIndex: wordIndex,
-                          letterIndex: i,
-                          words: words,
-                        }),
-                        letter: letter,
-                        typedLetters: typedLetters,
-                      })
-                      ? 'text-emerald-600'
-                      : 'text-red-600'
-                    : 'text-muted-foreground',
-                  // Add cursor to the current letter
-                  typedLetters.length ===
-                    getLetterIndex({
-                      wordIndex: wordIndex,
-                      letterIndex: i,
-                      words: words,
-                    }) && 'cursor',
-                ]"
+              <!-- Quantity toggle -->
+              <Tabs
+                @update:model-value="
+                  (value) => {
+                    restart({});
+                    countdown = Number(value);
+                    if (mode === 'words') {
+                      generateWords({ selectedQuantity: Number(value) });
+                    } else {
+                      generateWords({ selectedQuantity: 60 });
+                    }
+                  }
+                "
+                v-model="quantity"
               >
-                {{ letter }}
-              </span>
-            </span>
-
-            <!-- Spaces -->
-            <span
-              :class="[
-                // Get to the start of the previous word + its length to reach the space
-                typedLetters[
-                  getWordStartIndex({ wordIndex: wordIndex, words: words }) +
-                    word.length
-                ] &&
-                typedLetters[
-                  getWordStartIndex({ wordIndex: wordIndex, words: words }) +
-                    word.length
-                ] !== ' '
-                  ? 'bg-red-200'
-                  : '',
-                typedLetters.length ===
-                  getWordStartIndex({ wordIndex: wordIndex, words: words }) +
-                    word.length && 'cursor',
-              ]"
-              v-if="wordIndex <= words.length - 1"
-            >
-              <!-- Add spaces between words except the last word -->
-              {{ "" }}
-            </span>
-          </span>
+                <TabsList>
+                  <TabsTrigger
+                    v-for="value in quantities"
+                    class="dark:data-[state=active]:bg-background"
+                    :value="value"
+                  >
+                    {{ value }}
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+          </div>
         </div>
+
+        <!-- Punctuation -->
+        <button
+          class="transition-opacity duration-500"
+          :class="started && 'opacity-0 pointer-events-none'"
+        >
+          Punctuation
+        </button>
       </div>
+      <!-- Timer & Textbox -->
+      <div
+        class="flex-1 flex flex-col justify-start items-start w-full max-w-7xl py-5"
+      >
+        <p
+          v-if="mode === 'time'"
+          class="px-10 text-5xl font-semibold text-foreground mb-2 transition-opacity duration-500"
+          :class="[!started && 'opacity-0 pointer-events-none']"
+        >
+          {{ time }}
+        </p>
+        <p
+          v-if="mode === 'words'"
+          class="px-10 text-5xl font-semibold text-foreground mb-2 transition-opacity duration-500"
+          :class="[!started && 'opacity-0 pointer-events-none']"
+        >
+          {{ `${typedWords.length}/${words.length}` }}
+        </p>
+        <!-- Typing box -->
+        <div
+          ref="box"
+          class="relative w-full max-h-52 text-4xl whitespace-pre-wrap overflow-scroll leading-normal no-scrollbar px-10"
+        >
+          <div class="w-full flex flex-wrap justify-start">
+            <!-- Words map -->
+            <span
+              v-for="(word, wordIndex) in words"
+              :key="'w-' + wordIndex"
+              class="inline-flex items-center"
+            >
+              <!-- Letters in the word -->
+              <span
+                v-for="(letter, i) in word.split('')"
+                :key="'l-' + wordIndex + '-' + i"
+                class="inline-flex flex-col items-center"
+              >
+                <!-- Typed letter  -->
+                <span
+                  class="text-lg font-mono h-6 flex items-center justify-center select-none"
+                  :class="[
+                    // Check if the letter exists, if so, add a color based on if it matches or not
+                    typedLetters[
+                      getLetterIndex({
+                        wordIndex: wordIndex,
+                        letterIndex: i,
+                        words: words,
+                      })
+                    ]
+                      ? isMatchingLowerCase({
+                          index: getLetterIndex({
+                            wordIndex: wordIndex,
+                            letterIndex: i,
+                            words: words,
+                          }),
+                          letter: letter,
+                          typedLetters: typedLetters,
+                        })
+                        ? 'text-emerald-500 font-semibold'
+                        : 'text-red-500 font-semibold'
+                      : 'opacity-0',
+                  ]"
+                >
+                  {{
+                    typedLetters[
+                      getLetterIndex({
+                        wordIndex: wordIndex,
+                        letterIndex: i,
+                        words: words,
+                      })
+                    ]
+                  }}
+                </span>
 
-      <Progress class="w-full max-w-7xl" :model-value="progress" />
-      <!-- Time & Icons -->
-      <div class="flex flex-row justify-between w-full max-w-7xl gap-5">
-        <Tooltip>
-          <TooltipTrigger as-child>
-            <Repeat
-              animate-on-hover
-              @click="restart({ repeat: true })"
-              class="w-5"
-            />
-          </TooltipTrigger>
-          <TooltipContent side="bottom">Repeat</TooltipContent>
-        </Tooltip>
+                <!-- Intended letter  -->
+                <span
+                  class="text-4xl"
+                  :class="[
+                    // Check if the letter exists, if so, add a color based on if it matches or not
+                    typedLetters[
+                      getLetterIndex({
+                        wordIndex: wordIndex,
+                        letterIndex: i,
+                        words: words,
+                      })
+                    ]
+                      ? isMatchingLowerCase({
+                          index: getLetterIndex({
+                            wordIndex: wordIndex,
+                            letterIndex: i,
+                            words: words,
+                          }),
+                          letter: letter,
+                          typedLetters: typedLetters,
+                        })
+                        ? 'text-emerald-600'
+                        : 'text-red-600'
+                      : 'text-muted-foreground',
+                    // Add cursor to the current letter
+                    typedLetters.length ===
+                      getLetterIndex({
+                        wordIndex: wordIndex,
+                        letterIndex: i,
+                        words: words,
+                      }) && 'cursor',
+                  ]"
+                >
+                  {{ letter }}
+                </span>
+              </span>
 
-        <!-- Next -->
-        <Tooltip>
-          <TooltipTrigger as-child>
-            <ArrowRight
-              animate-on-hover
-              @click="restart({ repeat: false })"
-              class="w-5"
-            />
-          </TooltipTrigger>
+              <!-- Spaces -->
+              <span
+                :class="[
+                  // Get to the start of the previous word + its length to reach the space
+                  typedLetters[
+                    getWordStartIndex({ wordIndex: wordIndex, words: words }) +
+                      word.length
+                  ] &&
+                  typedLetters[
+                    getWordStartIndex({ wordIndex: wordIndex, words: words }) +
+                      word.length
+                  ] !== ' '
+                    ? 'bg-red-200'
+                    : '',
+                  typedLetters.length ===
+                    getWordStartIndex({ wordIndex: wordIndex, words: words }) +
+                      word.length && 'cursor',
+                ]"
+                v-if="wordIndex <= words.length - 1"
+              >
+                <!-- Add spaces between words except the last word -->
+                {{ "" }}
+              </span>
+            </span>
+          </div>
+        </div>
 
-          <TooltipContent side="bottom">Next</TooltipContent>
-        </Tooltip>
+        <!-- Progress -->
+        <div v-if="started" class="w-full max-w-7xl px-10 mt-10">
+          <Progress :model-value="progress" />
+        </div>
+        <!-- Time & Icons -->
+        <div class="flex flex-row justify-center w-full max-w-7xl gap-10 mt-5">
+          <Tooltip>
+            <TooltipTrigger as-child>
+              <Repeat
+                animate-on-hover
+                @click="restart({ repeat: true })"
+                class="w-5"
+              />
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Repeat</TooltipContent>
+          </Tooltip>
+
+          <!-- Next -->
+          <Tooltip>
+            <TooltipTrigger as-child>
+              <Restart
+                animate-on-hover
+                @click="
+                  () => {
+                    restart({ repeat: false });
+                    if (mode === 'time') {
+                      generateWords({ selectedQuantity: 60 });
+                    } else {
+                      generateWords({});
+                    }
+                  }
+                "
+                class="w-5"
+              />
+            </TooltipTrigger>
+
+            <TooltipContent side="bottom">Restart</TooltipContent>
+          </Tooltip>
+        </div>
       </div>
     </div>
   </div>
