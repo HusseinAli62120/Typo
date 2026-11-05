@@ -309,6 +309,7 @@ onKeyStroke(["r", "R"], (e) => {
       <div
         class="flex-1 flex flex-col justify-start items-start w-full max-w-7xl py-5"
       >
+        <!-- Timer/Words -->
         <p
           v-if="mode === 'time'"
           class="px-10 text-5xl font-semibold text-foreground mb-2 transition-opacity duration-500"
@@ -345,25 +346,25 @@ onKeyStroke(["r", "R"], (e) => {
                 <span
                   class="text-lg font-mono h-6 flex items-center justify-center select-none"
                   :class="[
-                    // Check if the letter exists, if so, add a color based on if it matches or not
+                    // Check if the letter exists
                     typedLetters[
                       getLetterIndex({
                         wordIndex: wordIndex,
                         letterIndex: i,
                         words: words,
                       })
-                    ]
-                      ? isMatchingLowerCase({
-                          index: getLetterIndex({
-                            wordIndex: wordIndex,
-                            letterIndex: i,
-                            words: words,
-                          }),
-                          letter: letter,
-                          typedLetters: typedLetters,
-                        })
-                        ? 'text-emerald-500 font-semibold'
-                        : 'text-red-500 font-semibold'
+                    ] &&
+                    // If not matching, show the character, and it is red
+                    !isMatchingLowerCase({
+                      index: getLetterIndex({
+                        wordIndex: wordIndex,
+                        letterIndex: i,
+                        words: words,
+                      }),
+                      letter: letter,
+                      typedLetters: typedLetters,
+                    })
+                      ? 'text-red-600 font-semibold opacity-100'
                       : 'opacity-0',
                   ]"
                 >
