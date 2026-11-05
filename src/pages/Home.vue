@@ -45,7 +45,7 @@ const {
   correctWords,
   letters,
   typedLetters,
-  correctCharacters,
+  correctLetters,
   mode,
   quantity,
   graphArray,
@@ -464,7 +464,7 @@ onKeyStroke(["r", "R"], (e) => {
     "
     :elapsed-seconds="elapsedSeconds"
     :correct-words="correctWords"
-    :correct-characters="correctCharacters"
+    :correct-letters="correctLetters"
     :total-words="mode === 'words' ? words.length : typedWords.length"
     :total-characters="mode === 'words' ? letters.length : typedLetters.length"
   />

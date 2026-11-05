@@ -76,7 +76,7 @@ export default function useTypingValues() {
   //   Stats  //
 
   // Correct characters
-  const correctCharacters = computed(() => {
+  const correctLetters = computed(() => {
     let count = 0;
     for (let i = 0; i < typedLetters.value.length; i++) {
       if (typedLetters.value[i] === letters.value[i]) count++;
@@ -103,15 +103,13 @@ export default function useTypingValues() {
 
     // floor at 1 second so the first keystrokes don't show a huge spike
     const minutes = Math.max(seconds / 60, 1 / 60);
-    return startTime.value
-      ? Math.round(correctCharacters.value / 5 / minutes)
-      : 0;
+    return startTime.value ? Math.round(correctLetters.value / 5 / minutes) : 0;
   });
 
   // Accuracy
   const accuracy = computed(() =>
     typedLetters.value.length
-      ? Math.round((correctCharacters.value / typedLetters.value.length) * 100)
+      ? Math.round((correctLetters.value / typedLetters.value.length) * 100)
       : 100,
   );
 
@@ -243,7 +241,7 @@ export default function useTypingValues() {
     graphTimer,
     elapsedSeconds,
     time,
-    correctCharacters,
+    correctLetters,
     correctWords,
     wpm,
     accuracy,

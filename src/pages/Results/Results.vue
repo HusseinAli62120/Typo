@@ -19,7 +19,7 @@ const {
   time,
   correctWords,
   totalWords,
-  correctCharacters,
+  correctLetters,
   totalCharacters,
 } = defineProps<{
   wpm: number;
@@ -29,7 +29,7 @@ const {
   elapsedSeconds: number;
   correctWords: number;
   totalWords: number;
-  correctCharacters: number;
+  correctLetters: number;
   totalCharacters: number;
 }>();
 
@@ -128,7 +128,7 @@ const DetailedResults: ResultCardValue[] = [
         <StatsCard label="Time" :value="`${time}`" />
         <StatsCard
           label="Characters"
-          :value="`${correctCharacters}/${totalCharacters}`"
+          :value="`${correctLetters}/${totalCharacters}`"
         />
       </div>
 
