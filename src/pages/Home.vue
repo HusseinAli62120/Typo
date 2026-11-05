@@ -41,9 +41,11 @@ const quantities: Quantity[] = [1, 30, 60, 120, 300];
 
 const {
   words,
-  letters,
   typedWords,
+  correctWords,
+  letters,
   typedLetters,
+  correctCharacters,
   mode,
   quantity,
   graphArray,
@@ -58,7 +60,6 @@ const {
   generateWords,
   countdown,
   progress,
-  correctCharacters,
 } = useTypingValues();
 
 let started = computed(() => {
@@ -462,9 +463,10 @@ onKeyStroke(["r", "R"], (e) => {
       }
     "
     :elapsed-seconds="elapsedSeconds"
-    :correct-words="typedWords.length"
+    :correct-words="correctWords"
     :correct-characters="correctCharacters"
-    :total-characters="typedLetters.length"
+    :total-words="mode === 'words' ? words.length : typedWords.length"
+    :total-characters="mode === 'words' ? letters.length : typedLetters.length"
   />
 
   <FluidCursor

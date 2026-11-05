@@ -187,7 +187,7 @@
 }
 
 .screen {
-  @apply w-full h-screen flex flex-col items-center justify-center relative bg-muted/50;
+  @apply w-full h-screen flex flex-col items-center justify-center relative bg-muted/40;
 }
 
 * {

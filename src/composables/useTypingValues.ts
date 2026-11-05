@@ -15,7 +15,7 @@ export default function useTypingValues() {
 
   // Modes
   let mode = ref<Mode>("time");
-  let quantity = ref<Quantity>(30);
+  let quantity = ref<Quantity>(1);
 
   // Times
 
@@ -80,6 +80,15 @@ export default function useTypingValues() {
     let count = 0;
     for (let i = 0; i < typedLetters.value.length; i++) {
       if (typedLetters.value[i] === letters.value[i]) count++;
+    }
+    return count;
+  });
+
+  // Correct words
+  const correctWords = computed(() => {
+    let count = 0;
+    for (let index = 0; index < typedWords.value.length; index++) {
+      if (typedWords.value[index] === words.value[index]) count++;
     }
     return count;
   });
@@ -235,6 +244,7 @@ export default function useTypingValues() {
     elapsedSeconds,
     time,
     correctCharacters,
+    correctWords,
     wpm,
     accuracy,
     isDone,

@@ -2,6 +2,7 @@
 import ChevronDown from "@/components/animate-ui/icons/ChevronDown.vue";
 import StatsCard from "@/components/StatsCard.vue";
 import type { AreaChartItem } from "@/types/AreaChartItem";
+import type { ResultCardValue } from "@/types/ResultCardValue";
 import { RippleButton } from "@animate-ui/vue/primitives/buttons/ripple";
 import { Magnetic } from "@animate-ui/vue/primitives/effects/magnetic";
 
@@ -17,6 +18,7 @@ const {
   wpmArray,
   time,
   correctWords,
+  totalWords,
   correctCharacters,
   totalCharacters,
 } = defineProps<{
@@ -26,6 +28,7 @@ const {
   time: string;
   elapsedSeconds: number;
   correctWords: number;
+  totalWords: number;
   correctCharacters: number;
   totalCharacters: number;
 }>();
@@ -50,16 +53,51 @@ const categories: Record<string, BulletLegendItemInterface> = {
   wpm: { name: "WPM", color: "var(--color-brand)" },
 };
 
-const xFormatter = (tick: number, i?: number, ticks?: number[]): string => {
+const xFormatter = (tick: number): string => {
   if (typeof tick === "number" && AreaChartData[tick]?.seconds) {
     return AreaChartData[tick].seconds.toString();
   }
   return String(tick);
 };
+
+const fastest = Math.max(...wpmArray);
+const slowest = Math.min(...wpmArray);
+
+// Screen-2 Cards
+const DetailedResults: ResultCardValue[] = [
+  {
+    label: "Peak Speed",
+    value: `${fastest}`,
+    metric: "WPM",
+  },
+  {
+    label: "Average",
+    value: `${wpm}`,
+    metric: "WPM",
+  },
+  {
+    label: "Slowest",
+    value: `${slowest}`,
+    metric: "WPM",
+  },
+  {
+    label: "Words",
+    value: `${correctWords}/${totalWords}`,
+  },
+  {
+    label: "Mistakes",
+    value: `8`,
+  },
+  {
+    label: "Consistency",
+    value: "88%",
+  },
+];
 </script>
 
 <template>
   <div class="flex flex-col items-center">
+    <!-- Screen-1 -->
     <div class="screen">
       <div class="flex flex-col items-center justify-center space-y-3 mb-16">
         <p
@@ -117,39 +155,72 @@ const xFormatter = (tick: number, i?: number, ticks?: number[]): string => {
 
     <!-- Screen-2 -->
     <div id="screen-2" class="screen">
-      <AreaChart
-        :data="AreaChartData"
-        :height="300"
-        class="w-full max-w-7xl"
-        y-label="WPM"
-        x-label="Seconds"
-        :tooltip-title-formatter="
-          (value: AreaChartItem) => {
-            if (value.seconds > 1) {
-              return `${value.seconds} Seconds`;
+      <!-- Chart -->
+      <div
+        class="w-full max-w-7xl flex flex-col items-center space-y-4 bg-card py-5 px-5 rounded-md border border-border"
+      >
+        <div class="w-full flex flex-row items-center justify-between">
+          <p class="text-foreground font-semibold text-xl">Speed Over Time</p>
+          <p class="text-muted-foreground text-md">Peak {{ fastest }} WPM</p>
+        </div>
+        <AreaChart
+          :class="'w-full'"
+          :data="AreaChartData"
+          :height="250"
+          class=""
+          y-label="WPM"
+          x-label="Seconds"
+          :tooltip-title-formatter="
+            (value: AreaChartItem) => {
+              if (value.seconds > 1) {
+                return `${value.seconds} Seconds`;
+              }
+              return `${value.seconds} Second`;
             }
-            return `${value.seconds} Second`;
-          }
-        "
-        :categories="categories"
-        :y-num-ticks="4"
-        :x-num-ticks="wpmArray.length"
-        :y-grid-line="true"
-        :legend-position="LegendPosition.TopRight"
-        :hide-legend="false"
-        :marker-config="{
-          id: 'areaChart',
-          config: {
-            wpm: {
-              type: 'circle',
-              size: 6,
-              strokeWidth: 2,
-              color: 'var(--color-brand)',
+          "
+          :categories="categories"
+          :y-num-ticks="4"
+          :x-num-ticks="wpmArray.length"
+          :y-grid-line="true"
+          :legend-position="LegendPosition.TopRight"
+          :hide-legend="false"
+          :marker-config="{
+            id: 'areaChart',
+            config: {
+              wpm: {
+                type: 'circle',
+                size: 6,
+                strokeWidth: 2,
+                color: 'var(--color-brand)',
+              },
             },
-          },
-        }"
-        :x-formatter="xFormatter"
-      />
+          }"
+          :x-formatter="xFormatter"
+        />
+      </div>
+
+      <!-- Cards -->
+      <div class="flex flex-row items-center justify-center space-x-5 my-10">
+        <!-- First three elements of the array -->
+        <StatsCard
+          v-for="(value, index) in DetailedResults.slice(0, 3)"
+          :key="index"
+          :label="value.label"
+          :value="value.value"
+          :metric="value.metric"
+        />
+      </div>
+
+      <!-- Cards -->
+      <div class="flex flex-row items-center justify-center space-x-5">
+        <!-- Last three elements of the array -->
+        <StatsCard
+          v-for="(value, index) in DetailedResults.slice(3)"
+          :key="index"
+          :label="value.label"
+          :value="value.value"
+        />
+      </div>
     </div>
   </div>
 </template>
