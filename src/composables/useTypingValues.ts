@@ -8,6 +8,7 @@ export default function useTypingValues() {
   // What the user is typing
   let typedLetters = ref<string[]>([]);
   let typedWords = ref<string[]>([]);
+  let typedLettersRaw = ref<string[]>([]); // Includes every letter the user typed, even the ones that were deleted (backspaced) (used for accuracy & wpm)
 
   // The text to type
   let words = ref<string[]>([]);
@@ -84,6 +85,15 @@ export default function useTypingValues() {
     return count;
   });
 
+  // Mistakes
+  const mistakes = computed(() => {
+    let count = 0;
+    for (let index = 0; index < typedLettersRaw.value.length; index++) {
+      if (typedLettersRaw.value[index] != letters.value[index]) count++;
+    }
+    return count;
+  });
+
   // Correct words
   const correctWords = computed(() => {
     let count = 0;
@@ -106,12 +116,39 @@ export default function useTypingValues() {
     return startTime.value ? Math.round(correctLetters.value / 5 / minutes) : 0;
   });
 
-  // Accuracy
+  // Accuracy (Correct letters/Raw letters) * 100
   const accuracy = computed(() =>
     typedLetters.value.length
-      ? Math.round((correctLetters.value / typedLetters.value.length) * 100)
+      ? Math.round((correctLetters.value / typedLettersRaw.value.length) * 100)
       : 100,
   );
+
+  const consistency = computed(() => {
+    // WPM for each second
+    const values = graphArray.value;
+    if (!values || values.length === 0) return 100;
+
+    // Calculate the average
+    const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
+    if (mean === 0) return 0;
+
+    // Calculate square difference (value - mean)^2
+    const squareDiffs = values.map((val) => Math.pow(val - mean, 2));
+
+    // Calculate their average
+    const avgSquareDiff =
+      squareDiffs.reduce((sum, val) => sum + val, 0) / values.length;
+
+    // Square deviation
+    const standardDeviation = Math.sqrt(avgSquareDiff);
+
+    // Calculate Coefficient of Variation and map to 0-100 scale
+    const coefficientOfVariation = (standardDeviation / mean) * 100;
+    const consistencyScore = 100 - coefficientOfVariation;
+
+    // Clamp between 0 and 100 and round
+    return Math.max(0, Math.min(100, Math.round(consistencyScore)));
+  });
 
   // Done flag
   let isDone = ref<boolean>(false);
@@ -199,6 +236,7 @@ export default function useTypingValues() {
   const restart = ({ repeat = false }: { repeat?: boolean }) => {
     stopTimers();
     typedLetters.value = [];
+    typedLettersRaw.value = [];
     graphArray.value = [];
     typedWords.value = [];
     now.value = Date.now();
@@ -231,6 +269,7 @@ export default function useTypingValues() {
     typedWords,
     words,
     letters,
+    typedLettersRaw,
     mode,
     quantity,
     startTime,
@@ -253,5 +292,7 @@ export default function useTypingValues() {
     restart,
     generateWords,
     progress,
+    consistency,
+    mistakes,
   };
 }

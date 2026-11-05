@@ -21,16 +21,19 @@ const {
   totalWords,
   correctLetters,
   totalCharacters,
+  consistency,
+  mistakes,
 } = defineProps<{
   wpm: number;
   wpmArray: number[];
   accuracy: number;
   time: string;
-  elapsedSeconds: number;
   correctWords: number;
   totalWords: number;
   correctLetters: number;
   totalCharacters: number;
+  consistency: number;
+  mistakes: number;
 }>();
 
 const emit = defineEmits<{ (emit: "restart"): void }>();
@@ -86,11 +89,11 @@ const DetailedResults: ResultCardValue[] = [
   },
   {
     label: "Mistakes",
-    value: `8`,
+    value: `${mistakes}`,
   },
   {
     label: "Consistency",
-    value: "88%",
+    value: `${consistency}%`,
   },
 ];
 </script>

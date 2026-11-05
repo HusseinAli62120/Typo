@@ -46,11 +46,11 @@ const {
   letters,
   typedLetters,
   correctLetters,
+  typedLettersRaw,
   mode,
   quantity,
   graphArray,
   time,
-  elapsedSeconds,
   wpm,
   accuracy,
   isDone,
@@ -60,6 +60,8 @@ const {
   generateWords,
   countdown,
   progress,
+  consistency,
+  mistakes,
 } = useTypingValues();
 
 let started = computed(() => {
@@ -95,6 +97,7 @@ onMounted(() => {
       typedLetters: typedLetters.value,
       letters: letters.value,
       typedWords: typedWords.value,
+      typedLettersRaw: typedLettersRaw.value,
     });
   });
 });
@@ -107,6 +110,7 @@ onUnmounted(() => {
       typedLetters: typedLetters.value,
       letters: letters.value,
       typedWords: typedWords.value,
+      typedLettersRaw: typedLettersRaw.value,
     });
   });
 
@@ -462,11 +466,12 @@ onKeyStroke(["r", "R"], (e) => {
         }
       }
     "
-    :elapsed-seconds="elapsedSeconds"
     :correct-words="correctWords"
     :correct-letters="correctLetters"
     :total-words="mode === 'words' ? words.length : typedWords.length"
     :total-characters="mode === 'words' ? letters.length : typedLetters.length"
+    :consistency="consistency"
+    :mistakes="mistakes"
   />
 
   <FluidCursor
