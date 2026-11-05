@@ -86,13 +86,7 @@ export default function useTypingValues() {
   });
 
   // Mistakes
-  const mistakes = computed(() => {
-    let count = 0;
-    for (let index = 0; index < typedLettersRaw.value.length; index++) {
-      if (typedLettersRaw.value[index] != letters.value[index]) count++;
-    }
-    return count;
-  });
+  const mistakes = ref<boolean[]>([]);
 
   // Correct words
   const correctWords = computed(() => {
@@ -202,7 +196,7 @@ export default function useTypingValues() {
         }
 
         // Generate more words to ensure user never runs out of words
-        generateWords({ selectedQuantity: 10 });
+        generateWords({ selectedQuantity: 5 });
 
         // Check if finished
         if (countdown.value <= 0) {
@@ -239,6 +233,7 @@ export default function useTypingValues() {
     typedLettersRaw.value = [];
     graphArray.value = [];
     typedWords.value = [];
+    mistakes.value = [];
     now.value = Date.now();
     startTime.value = null;
     endTime.value = null;

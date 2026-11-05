@@ -9,12 +9,14 @@ export const captureKeyStroke = ({
   letters,
   typedWords,
   typedLettersRaw,
+  mistakes,
 }: {
   e: KeyboardEvent;
   typedLetters: string[];
   letters: string[];
   typedWords: string[];
   typedLettersRaw: string[];
+  mistakes: boolean[];
 }) => {
   // Stop if done typing
   if (typedLetters.length >= letters.length) return;
@@ -70,6 +72,9 @@ export const captureKeyStroke = ({
     // Push to the raw array
     typedLettersRaw.push(e.key);
 
+    // Check for mistakes
+    if (e.key != expectedCharacter) mistakes.push(true);
+
     if (isSpace) {
       typedWords.push(currentWord.value);
       currentWord.value = "";
@@ -84,6 +89,9 @@ export const captureKeyStroke = ({
   else {
     // Push to the raw array
     typedLettersRaw.push(e.key);
+
+    // Check for mistakes
+    if (e.key != expectedCharacter) mistakes.push(true);
 
     // If the expected character is space, push the word and reset the current one, else just add the char to current word
     if (isSpace) {

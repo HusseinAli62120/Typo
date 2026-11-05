@@ -76,6 +76,12 @@ watch(
   typedLetters,
   (value) => {
     startTimers({ currentTypedLetters: value });
+
+    // Reset if all letters are deleted
+    if (value.length === 0 && typedLettersRaw.value.length) {
+      restart({ repeat: true });
+      console.log("reset");
+    }
   },
   { deep: true },
 );
@@ -98,6 +104,7 @@ onMounted(() => {
       letters: letters.value,
       typedWords: typedWords.value,
       typedLettersRaw: typedLettersRaw.value,
+      mistakes: mistakes.value,
     });
   });
 });
@@ -111,6 +118,7 @@ onUnmounted(() => {
       letters: letters.value,
       typedWords: typedWords.value,
       typedLettersRaw: typedLettersRaw.value,
+      mistakes: mistakes.value,
     });
   });
 
@@ -471,7 +479,7 @@ onKeyStroke(["r", "R"], (e) => {
     :total-words="mode === 'words' ? words.length : typedWords.length"
     :total-characters="mode === 'words' ? letters.length : typedLetters.length"
     :consistency="consistency"
-    :mistakes="mistakes"
+    :mistakes="mistakes.length"
   />
 
   <FluidCursor
