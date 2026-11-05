@@ -76,7 +76,7 @@ export default function useTypingValues() {
 
   //   Stats  //
 
-  // Correct characters
+  // Correct letters
   const correctLetters = computed(() => {
     let count = 0;
     for (let i = 0; i < typedLetters.value.length; i++) {
@@ -117,6 +117,7 @@ export default function useTypingValues() {
       : 100,
   );
 
+  // Consistency
   const consistency = computed(() => {
     // WPM for each second
     const values = graphArray.value;

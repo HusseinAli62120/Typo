@@ -64,9 +64,19 @@ const {
   mistakes,
 } = useTypingValues();
 
+// To hide UI
 let started = computed(() => {
-  return typedLetters.value.length > 0;
+  return typedLetters.value.length > 0 && typedLettersRaw.value.length > 0;
 });
+
+// To hide the cursor
+const cursorHide = ref(false);
+
+// Show the pointer again when the mouse actually moves
+function onMouseMove(e: MouseEvent) {
+  if (Math.abs(e.movementX) + Math.abs(e.movementY) > 1)
+    cursorHide.value = false;
+}
 
 // Reference to the text box
 const box = ref<HTMLElement | null>(null);
@@ -77,10 +87,22 @@ watch(
   (value) => {
     startTimers({ currentTypedLetters: value });
 
+    if (value.length > 0) {
+      // Drop focus from whatever was clicked (tabs, buttons) so Space can't activate it
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && active !== document.body) {
+        active.blur();
+      }
+
+      // Hide the cursor
+      cursorHide.value = true;
+    }
+
     // Reset if all letters are deleted
     if (value.length === 0 && typedLettersRaw.value.length) {
       restart({ repeat: true });
-      console.log("reset");
+      // show the cursor
+      cursorHide.value = false;
     }
   },
   { deep: true },
@@ -191,7 +213,12 @@ onKeyStroke(["r", "R"], (e) => {
 
 <template>
   <!-- Typing page -->
-  <div v-if="!isDone" class="screen">
+  <div
+    v-if="!isDone"
+    class="screen"
+    :class="cursorHide && '**:cursor-none'"
+    @mousemove="onMouseMove"
+  >
     <!-- Navbar -->
     <Navbar />
 

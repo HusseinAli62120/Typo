@@ -110,5 +110,5 @@ export const captureKeyStroke = ({
     currentWord.value = "";
   }
 
-  console.log(currentWord.value);
+  // console.log(currentWord.value);
 };
