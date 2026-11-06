@@ -1,5 +1,49 @@
-# Vue 3 + TypeScript + Vite
+# ⌨️ Typo!
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+A Vue application to measure and improve your typing speed.
 
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+- Check it out: https://iv-typo.vercel.app/  👈
+
+---
+
+### 🚀 Features:
+
+- Multiple modes and difficulty settings
+- Punctuation toggle
+- Sleek UI design
+- Detailed stats
+
+### 💻 Getting Started:
+
+1. Clone the repo.
+2. Run: `npm install` to install the dependencies.
+3. Run: `npm run dev` to start!
+
+### 📦 Packages:
+
+This is a Vite app and was developed primarily with Vue
+
+- **Vite:** The build tool.
+- **Vue:** The application library.
+- **Tailwindcss:** The main styling library.
+- **Animate UI:** The main component library.
+- **Inspira UI:** Another component library.
+- **Nuxt Charts:** The charts library.
+- **random-words:** To generate the words randomly.
+
+---
+
+- 🌐 This app is deployed on Vercel.
+
+---
+
+### 📃 References:
+
+- https://vite.dev/
+https://vuejs.org/
+- https://tailwindcss.com/
+- https://animate-ui.com/vue
+- https://inspira-ui.com/
+- https://nuxtcharts.com/
+- https://www.npmjs.com/package/random-words
+- https://vercel.com/
