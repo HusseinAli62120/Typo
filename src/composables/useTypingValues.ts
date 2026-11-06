@@ -15,8 +15,10 @@ export default function useTypingValues() {
   let letters = ref<string[]>([]);
 
   // Modes
-  let mode = ref<Mode>("time");
-  let quantity = ref<Quantity>(1);
+  let mode = ref<Mode>((localStorage.getItem("mode") as Mode) || "time");
+  let quantity = ref<Quantity>(
+    (Number(localStorage.getItem("quantity")) as Quantity) || 1,
+  );
 
   // Times
 

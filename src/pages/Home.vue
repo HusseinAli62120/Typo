@@ -56,13 +56,19 @@ const {
 } = useTypingValues();
 
 // Cursor value
-let selectedCursor = ref<SelectedCursor>("fluid");
+let selectedCursor = ref<SelectedCursor>(
+  (localStorage.getItem("cursor") as SelectedCursor) || "fluid",
+);
 
+// Handle cursor change
 const handleCursorChange = ({ value }: { value: SelectedCursor }) => {
   selectedCursor.value = value;
+
+  // Save preference
+  localStorage.setItem("cursor", value);
 };
 
-// To hide UI
+// To hide UI (When typing the first letter)
 let started = computed(() => {
   return typedLetters.value.length > 0 && typedLettersRaw.value.length > 0;
 });
@@ -71,10 +77,45 @@ let started = computed(() => {
 const cursorHide = ref(false);
 
 // Show the pointer again when the mouse actually moves
-function onMouseMove(e: MouseEvent) {
+const onMouseMove = (e: MouseEvent) => {
   if (Math.abs(e.movementX) + Math.abs(e.movementY) > 1)
     cursorHide.value = false;
-}
+};
+
+// Tab mode change
+const handleModeChange = ({ selectedMode }: { selectedMode: Mode }) => {
+  // Restart and save preference in local storage
+  restart({});
+
+  localStorage.setItem("mode", selectedMode);
+
+  // Generate words based on the mode selected
+  if (selectedMode === "words") {
+    generateWords({ selectedQuantity: quantity.value });
+  } else {
+    generateWords({ selectedQuantity: 60 });
+  }
+};
+
+// Tab quantity/duration change
+const handleQuantityChange = ({
+  selectedQuantity,
+}: {
+  selectedQuantity: Quantity;
+}) => {
+  // Restart and set preference
+  restart({});
+
+  localStorage.setItem("quantity", selectedQuantity.toString());
+
+  // Set the countdown to the duration selected and generate words based on the mode
+  countdown.value = Number(selectedQuantity);
+  if (mode.value === "words") {
+    generateWords({ selectedQuantity: Number(selectedQuantity) });
+  } else {
+    generateWords({ selectedQuantity: 60 });
+  }
+};
 
 // Reference to the text box
 const box = ref<HTMLElement | null>(null);
@@ -250,12 +291,7 @@ onKeyStroke(["r", "R"], (e) => {
               <Tabs
                 @update:model-value="
                   (value) => {
-                    restart({});
-                    if (value === 'words') {
-                      generateWords({ selectedQuantity: quantity });
-                    } else {
-                      generateWords({ selectedQuantity: 60 });
-                    }
+                    handleModeChange({ selectedMode: value as Mode });
                   }
                 "
                 v-model="mode"
@@ -277,13 +313,9 @@ onKeyStroke(["r", "R"], (e) => {
               <Tabs
                 @update:model-value="
                   (value) => {
-                    restart({});
-                    countdown = Number(value);
-                    if (mode === 'words') {
-                      generateWords({ selectedQuantity: Number(value) });
-                    } else {
-                      generateWords({ selectedQuantity: 60 });
-                    }
+                    handleQuantityChange({
+                      selectedQuantity: value as Quantity,
+                    });
                   }
                 "
                 v-model="quantity"
