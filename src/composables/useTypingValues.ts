@@ -1,6 +1,8 @@
+import type { Difficulty } from "@/types/Difficulty";
 import type { Mode } from "@/types/Mode";
 import type { Quantity } from "@/types/Quantity";
 import getLetters from "@/utils/getLetters";
+import { normalizeWords } from "@/utils/normalizeWords";
 import { generate } from "random-words";
 import { computed, ref } from "vue";
 
@@ -18,6 +20,9 @@ export default function useTypingValues() {
   let mode = ref<Mode>((localStorage.getItem("mode") as Mode) || "time");
   let quantity = ref<Quantity>(
     (Number(localStorage.getItem("quantity")) as Quantity) || 1,
+  );
+  let difficulty = ref<Difficulty>(
+    (localStorage.getItem("difficulty") as Difficulty) || "Normal",
   );
 
   // Times
@@ -112,6 +117,8 @@ export default function useTypingValues() {
     return startTime.value ? Math.round(correctLetters.value / 5 / minutes) : 0;
   });
 
+  let averageWPM = ref<number>(0);
+
   // Accuracy (Correct letters/Raw letters) * 100
   const accuracy = computed(() =>
     typedLetters.value.length
@@ -162,6 +169,22 @@ export default function useTypingValues() {
     graphTimer.value = undefined;
   };
 
+  // Actions taken when the test is finished (Helper function)
+  const finished = () => {
+    // Update endTime (wpm calc) and stop the timers
+    endTime.value = Date.now();
+    stopTimers();
+
+    // Calculate the average
+    averageWPM.value = Math.round(
+      graphArray.value.reduce((prev, val) => prev + val, 0) /
+        graphArray.value.length,
+    );
+
+    // Mark as done
+    isDone.value = true;
+  };
+
   // Start timer on first keystroke
   const startTimers = ({
     currentTypedLetters,
@@ -203,13 +226,7 @@ export default function useTypingValues() {
 
         // Check if finished
         if (countdown.value <= 0) {
-          // Update endTime (wpm calc) and stop the timers
-          endTime.value = Date.now();
-          stopTimers();
-
-          setTimeout(() => {
-            isDone.value = true;
-          }, 100);
+          finished();
         }
       }, 1000);
     }
@@ -220,12 +237,7 @@ export default function useTypingValues() {
       currentTypedLetters.length >= letters.value.length &&
       endTime.value === null
     ) {
-      // Update endTime (wpm calc) and stop the timers
-      endTime.value = Date.now();
-      stopTimers();
-      setTimeout(() => {
-        isDone.value = true;
-      }, 100);
+      finished();
     }
   };
 
@@ -242,6 +254,7 @@ export default function useTypingValues() {
     endTime.value = null;
     countdown.value = quantity.value;
     isDone.value = false;
+    averageWPM.value = 0;
 
     // Generate new words only on restart, not on repeat
     if (!repeat) {
@@ -252,13 +265,67 @@ export default function useTypingValues() {
 
   // Generate words (used onMount and when changing quantity)
   const generateWords = ({
+    selectedMode,
     selectedQuantity,
+    selectedDifficulty,
   }: {
+    selectedMode?: Mode;
     selectedQuantity?: number;
+    selectedDifficulty?: Difficulty;
   }) => {
-    words.value = words.value.concat(
-      generate(selectedQuantity ?? quantity.value) as string[],
-    );
+    // Either selected tab value or current value
+    const activeMode = selectedMode || mode.value;
+    const activeQuantity = selectedQuantity || quantity.value;
+    const activeDifficulty = selectedDifficulty || difficulty.value;
+
+    if (activeMode === "words") {
+      // In words mode, generate words, filter them to remove more difficult ones and keep doing this unitl we have enough
+      while (words.value.length < activeQuantity) {
+        let generatedWords: string[] =
+          activeDifficulty === "Normal"
+            ? (generate({
+                exactly: activeQuantity,
+                maxLength: 7,
+              }) as string[])
+            : (generate({
+                exactly: activeQuantity,
+                minLength: 4,
+              }) as string[]);
+
+        // Normalize only on normal difficulty
+        if (activeDifficulty === "Normal") {
+          generatedWords = normalizeWords({ words: generatedWords });
+        }
+
+        generatedWords.forEach((value) => {
+          if (words.value.length < activeQuantity) {
+            words.value.push(value);
+          }
+        });
+      }
+    }
+
+    // In time mode, we don't have to worry about words quantity, and we generate more every second, so we simply generate
+    // words and normalize them
+    if (activeMode === "time") {
+      let generatedWords: string[] =
+        activeDifficulty === "Normal"
+          ? (generate({
+              exactly: activeQuantity,
+              maxLength: 7,
+            }) as string[])
+          : (generate({
+              exactly: activeQuantity,
+              minLength: 4,
+            }) as string[]);
+
+      // Normalize only on normal difficulty
+      if (activeDifficulty === "Normal") {
+        generatedWords = normalizeWords({ words: generatedWords });
+      }
+
+      words.value = words.value.concat(generatedWords);
+    }
     getLetters({ words: words.value, letters: letters.value });
   };
 
@@ -280,7 +347,6 @@ export default function useTypingValues() {
     time,
     correctLetters,
     correctWords,
-    wpm,
     accuracy,
     isDone,
     startTimers,
@@ -292,5 +358,7 @@ export default function useTypingValues() {
     progress,
     consistency,
     mistakes,
+    averageWPM,
+    difficulty,
   };
 }

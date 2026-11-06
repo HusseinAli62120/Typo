@@ -25,10 +25,12 @@ import Progress from "@/components/ui/progress/Progress.vue";
 import SleekLineCursor from "@/components/ui/sleek-line-cursor/SleekLineCursor.vue";
 import { SleekLineCursorPropsValues } from "@/types/SleekLineCursor.ts";
 import type { SelectedCursor } from "@/types/SelectedCursor.ts";
+import type { Difficulty } from "@/types/Difficulty.ts";
 
 // Tab values (so not to repeat the code for each entry)
 const modes: Mode[] = ["time", "words"];
 const quantities: Quantity[] = [1, 30, 60, 120, 300];
+const difficulties: Difficulty[] = ["Normal", "Hard"];
 
 const {
   words,
@@ -42,7 +44,6 @@ const {
   quantity,
   graphArray,
   time,
-  wpm,
   accuracy,
   isDone,
   startTimers,
@@ -53,6 +54,8 @@ const {
   progress,
   consistency,
   mistakes,
+  averageWPM,
+  difficulty,
 } = useTypingValues();
 
 // Cursor value
@@ -91,9 +94,9 @@ const handleModeChange = ({ selectedMode }: { selectedMode: Mode }) => {
 
   // Generate words based on the mode selected
   if (selectedMode === "words") {
-    generateWords({ selectedQuantity: quantity.value });
+    generateWords({ selectedMode: selectedMode });
   } else {
-    generateWords({ selectedQuantity: 60 });
+    generateWords({ selectedMode: selectedMode, selectedQuantity: 60 });
   }
 };
 
@@ -117,6 +120,26 @@ const handleQuantityChange = ({
   }
 };
 
+const handleDifficultyChange = ({
+  selectedDifficulty,
+}: {
+  selectedDifficulty: Difficulty;
+}) => {
+  // Restart and save preference in local storage
+  restart({});
+
+  localStorage.setItem("difficulty", selectedDifficulty);
+
+  // Generate words based on the mode selected
+  if (mode.value === "words") {
+    generateWords({ selectedDifficulty: selectedDifficulty });
+  } else {
+    generateWords({
+      selectedDifficulty: selectedDifficulty,
+      selectedQuantity: 60,
+    });
+  }
+};
 // Reference to the text box
 const box = ref<HTMLElement | null>(null);
 
@@ -330,6 +353,28 @@ onKeyStroke(["r", "R"], (e) => {
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
+
+              <!-- Difficulty Toggle -->
+              <Tabs
+                @update:model-value="
+                  (value) => {
+                    handleDifficultyChange({
+                      selectedDifficulty: value as Difficulty,
+                    });
+                  }
+                "
+                v-model="difficulty"
+              >
+                <TabsList>
+                  <TabsTrigger
+                    v-for="value in difficulties"
+                    class="dark:data-[state=active]:bg-background"
+                    :value="value"
+                  >
+                    {{ value }}
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
           </div>
         </div>
@@ -525,7 +570,7 @@ onKeyStroke(["r", "R"], (e) => {
 
   <Results
     v-else
-    :wpm="wpm"
+    :wpm="averageWPM"
     :wpm-array="graphArray"
     :accuracy="accuracy"
     :time="time"
