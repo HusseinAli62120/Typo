@@ -111,7 +111,7 @@
 
   --vis-axis-grid-color: color-mix(
     in oklab,
-    var(--color-muted-foreground) 70%,
+    var(--color-muted-foreground) 20%,
     transparent
   ) !important;
 
