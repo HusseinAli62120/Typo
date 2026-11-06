@@ -26,6 +26,8 @@ import SleekLineCursor from "@/components/ui/sleek-line-cursor/SleekLineCursor.v
 import { SleekLineCursorPropsValues } from "@/types/SleekLineCursor.ts";
 import type { SelectedCursor } from "@/types/SelectedCursor.ts";
 import type { Difficulty } from "@/types/Difficulty.ts";
+import Toggle from "@/components/ui/toggle/Toggle.vue";
+import type { Punctuation } from "@/types/Punctuation.ts";
 
 // Tab values (so not to repeat the code for each entry)
 const modes: Mode[] = ["time", "words"];
@@ -56,6 +58,7 @@ const {
   mistakes,
   averageWPM,
   difficulty,
+  punctuation,
 } = useTypingValues();
 
 // Cursor value
@@ -140,6 +143,29 @@ const handleDifficultyChange = ({
     });
   }
 };
+
+const handlePunctuationChange = ({
+  selectedValue,
+}: {
+  selectedValue: Punctuation;
+}) => {
+  // Restart and save preference in local storage
+  restart({});
+
+  punctuation.value = selectedValue;
+
+  localStorage.setItem("punctuation", selectedValue.toString());
+
+  // Generate words based on the mode selected
+  if (mode.value === "words") {
+    generateWords({ isPunctuation: selectedValue });
+  } else {
+    generateWords({
+      isPunctuation: selectedValue,
+      selectedQuantity: 60,
+    });
+  }
+};
 // Reference to the text box
 const box = ref<HTMLElement | null>(null);
 
@@ -189,6 +215,7 @@ onMounted(() => {
       typedWords: typedWords.value,
       typedLettersRaw: typedLettersRaw.value,
       mistakes: mistakes.value,
+      isPunctuation: punctuation.value,
     });
   });
 });
@@ -203,6 +230,7 @@ onUnmounted(() => {
       typedWords: typedWords.value,
       typedLettersRaw: typedLettersRaw.value,
       mistakes: mistakes.value,
+      isPunctuation: punctuation.value,
     });
   });
 
@@ -380,12 +408,21 @@ onKeyStroke(["r", "R"], (e) => {
         </div>
 
         <!-- Punctuation -->
-        <button
-          class="transition-opacity duration-500"
-          :class="started && 'opacity-0 pointer-events-none'"
+        <Toggle
+          @update:model-value="
+            (value) => {
+              handlePunctuationChange({
+                selectedValue: value ? 'true' : 'false',
+              });
+            }
+          "
+          class="border border-border text-muted-foreground data-[state=on]:text-foreground"
+          :v-model="punctuation === 'true'"
+          :default-value="punctuation === 'true'"
         >
+          <LucideLetters />
           Punctuation
-        </button>
+        </Toggle>
       </div>
       <!-- Timer & Textbox -->
       <div
@@ -445,6 +482,7 @@ onKeyStroke(["r", "R"], (e) => {
                       }),
                       letter: letter,
                       typedLetters: typedLetters,
+                      isPunctuation: punctuation,
                     })
                       ? 'text-red-600 font-semibold opacity-100'
                       : 'opacity-0',
@@ -481,6 +519,7 @@ onKeyStroke(["r", "R"], (e) => {
                           }),
                           letter: letter,
                           typedLetters: typedLetters,
+                          isPunctuation: punctuation,
                         })
                         ? 'text-emerald-600'
                         : 'text-red-600'

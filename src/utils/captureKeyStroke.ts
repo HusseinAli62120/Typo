@@ -1,5 +1,6 @@
 import { ref } from "vue";
 import { allowedKeys } from "./values";
+import type { Punctuation } from "@/types/Punctuation";
 
 let currentWord = ref<string>("");
 
@@ -10,6 +11,7 @@ export const captureKeyStroke = ({
   typedWords,
   typedLettersRaw,
   mistakes,
+  isPunctuation = "false",
 }: {
   e: KeyboardEvent;
   typedLetters: string[];
@@ -17,6 +19,7 @@ export const captureKeyStroke = ({
   typedWords: string[];
   typedLettersRaw: string[];
   mistakes: boolean[];
+  isPunctuation: Punctuation;
 }) => {
   // Stop if done typing
   if (typedLetters.length >= letters.length) return;
@@ -91,7 +94,15 @@ export const captureKeyStroke = ({
     typedLettersRaw.push(e.key);
 
     // Check for mistakes
-    if (e.key != expectedCharacter) mistakes.push(true);
+    if (isPunctuation === "true") {
+      if (e.key != expectedCharacter) {
+        mistakes.push(true);
+      }
+    } else {
+      if (e.key.toLowerCase() != expectedCharacter.toLowerCase()) {
+        mistakes.push(true);
+      }
+    }
 
     // If the expected character is space, push the word and reset the current one, else just add the char to current word
     if (isSpace) {

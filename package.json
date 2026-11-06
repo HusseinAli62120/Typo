@@ -11,7 +11,7 @@
   "dependencies": {
     "@animate-ui/vue": "^2.4.2",
     "@inspira-ui/plugins": "^0.0.2",
-    "@lucide/vue": "^1.69.0",
+    "@lucide/vue": "^1.70.0",
     "@tailwindcss/vite": "^4.3.3",
     "@unovis/ts": "^1.7.1",
     "@unovis/vue": "^1.7.1",

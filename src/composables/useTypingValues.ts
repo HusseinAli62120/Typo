@@ -1,8 +1,10 @@
 import type { Difficulty } from "@/types/Difficulty";
 import type { Mode } from "@/types/Mode";
+import type { Punctuation } from "@/types/Punctuation";
 import type { Quantity } from "@/types/Quantity";
 import getLetters from "@/utils/getLetters";
 import { normalizeWords } from "@/utils/normalizeWords";
+import { createPunctuator } from "@/utils/puncuate";
 import { generate } from "random-words";
 import { computed, ref } from "vue";
 
@@ -23,6 +25,9 @@ export default function useTypingValues() {
   );
   let difficulty = ref<Difficulty>(
     (localStorage.getItem("difficulty") as Difficulty) || "Normal",
+  );
+  let punctuation = ref<Punctuation>(
+    (localStorage.getItem("punctuation") as Punctuation) || "false",
   );
 
   // Times
@@ -87,7 +92,17 @@ export default function useTypingValues() {
   const correctLetters = computed(() => {
     let count = 0;
     for (let i = 0; i < typedLetters.value.length; i++) {
-      if (typedLetters.value[i] === letters.value[i]) count++;
+      // If punctuation, compare the letters
+      if (punctuation.value === "true") {
+        if (typedLetters.value[i] === letters.value[i]) count++;
+
+        // If not compare their lowercases
+      } else {
+        if (
+          typedLetters.value[i].toLowerCase() === letters.value[i].toLowerCase()
+        )
+          count++;
+      }
     }
     return count;
   });
@@ -263,20 +278,26 @@ export default function useTypingValues() {
     }
   };
 
+  // Instansiate the punctuator
+  const punctuate = createPunctuator();
+
   // Generate words (used onMount and when changing quantity)
   const generateWords = ({
     selectedMode,
     selectedQuantity,
     selectedDifficulty,
+    isPunctuation,
   }: {
     selectedMode?: Mode;
     selectedQuantity?: number;
     selectedDifficulty?: Difficulty;
+    isPunctuation?: Punctuation;
   }) => {
     // Either selected tab value or current value
     const activeMode = selectedMode || mode.value;
     const activeQuantity = selectedQuantity || quantity.value;
     const activeDifficulty = selectedDifficulty || difficulty.value;
+    const activePunctuation = isPunctuation || punctuation.value;
 
     if (activeMode === "words") {
       // In words mode, generate words, filter them to remove more difficult ones and keep doing this unitl we have enough
@@ -295,6 +316,11 @@ export default function useTypingValues() {
         // Normalize only on normal difficulty
         if (activeDifficulty === "Normal") {
           generatedWords = normalizeWords({ words: generatedWords });
+        }
+
+        // Apply punctuator if active
+        if (activePunctuation === "true") {
+          generatedWords = punctuate({ words: generatedWords, final: true });
         }
 
         generatedWords.forEach((value) => {
@@ -324,8 +350,14 @@ export default function useTypingValues() {
         generatedWords = normalizeWords({ words: generatedWords });
       }
 
+      // Apply punctuator if active
+      if (activePunctuation === "true") {
+        generatedWords = punctuate({ words: generatedWords, final: false });
+      }
+
       words.value = words.value.concat(generatedWords);
     }
+
     getLetters({ words: words.value, letters: letters.value });
   };
 
@@ -360,5 +392,6 @@ export default function useTypingValues() {
     mistakes,
     averageWPM,
     difficulty,
+    punctuation,
   };
 }

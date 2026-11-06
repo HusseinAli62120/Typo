@@ -13,6 +13,9 @@ export const allowedKeys = [
   ...digits,
   ",",
   ".",
+  "!",
+  "?",
+  "&",
 
   // Action keys
   "Backspace",
