@@ -7,14 +7,14 @@ import {
 import Sun from "../animate-ui/icons/Sun.vue";
 import Moon from "../animate-ui/icons/Moon.vue";
 
-const { store, system } = useColorMode();
+const { store } = useColorMode({ initialValue: "light" });
 </script>
 
 <template>
   <ThemeToggler
     :theme="store as ThemeSelection"
-    :resolved-theme="system === 'dark' || store === 'dark' ? 'dark' : 'light'"
-    :set-theme="(theme: any) => (store = theme === 'system' ? 'auto' : theme)"
+    :resolved-theme="store === 'dark' ? 'dark' : 'light'"
+    :set-theme="(theme: any) => (store = theme === 'system' ? 'light' : theme)"
   >
     <template #default="{ effective, toggleTheme }">
       <Sun
