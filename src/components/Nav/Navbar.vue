@@ -43,11 +43,11 @@ const shortcuts: ShortcutDefinition[] = [
     class="w-full h-[10vh] px-4 py-2 flex flex-row items-center justify-between border-b border-border/50"
   >
     <h1 class="text-xl font-semibold text-foreground">Typo!</h1>
-    <div class="flex flex-row items-center space-x-7">
+    <div class="flex flex-row items-center">
       <!-- Hover Card -->
       <HoverCard class="mx-20">
         <HoverCardTrigger as-child>
-          <Info class="w-6" animate-on-hover />
+          <Info class="w-6 mx-7" animate-on-hover />
         </HoverCardTrigger>
         <HoverCardContent
           :align="'end'"
