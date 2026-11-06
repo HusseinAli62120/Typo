@@ -5,7 +5,7 @@ import isMatchingLowerCase from "../utils/isMatchingLowerCase.ts";
 import { captureKeyStroke } from "../utils/captureKeyStroke.ts";
 import Results from "./Results/Results.vue";
 import FluidCursor from "@/components/ui/fluid-cursor/FluidCursor.vue";
-import type { FluidCursorProps } from "@/types/FluidCursor.ts";
+import { FluidCursorPropsValues } from "@/types/FluidCursor.ts";
 import { getLetterIndex, getWordStartIndex } from "@/utils/getIndexes.ts";
 import useTypingValues from "@/composables/useTypingValues.ts";
 import Repeat from "@/components/animate-ui/icons/Repeat.vue";
@@ -22,18 +22,9 @@ import { LucideClock, LucideLetters } from "@lucide/vue";
 import type { Mode } from "@/types/Mode.ts";
 import type { Quantity } from "@/types/Quantity.ts";
 import Progress from "@/components/ui/progress/Progress.vue";
-
-// Fluid Cursor props
-const props = withDefaults(defineProps<FluidCursorProps>(), {
-  enabled: true,
-  densityDissipation: 3.5,
-  velocityDissipation: 2,
-  pressure: 0.1,
-  curl: 3,
-  splatRadius: 0.2,
-  splatForce: 6000,
-  transparent: true,
-});
+import SleekLineCursor from "@/components/ui/sleek-line-cursor/SleekLineCursor.vue";
+import { SleekLineCursorPropsValues } from "@/types/SleekLineCursor.ts";
+import type { SelectedCursor } from "@/types/SelectedCursor.ts";
 
 // Tab values (so not to repeat the code for each entry)
 const modes: Mode[] = ["time", "words"];
@@ -63,6 +54,13 @@ const {
   consistency,
   mistakes,
 } = useTypingValues();
+
+// Cursor value
+let selectedCursor = ref<SelectedCursor>("fluid");
+
+const handleCursorChange = ({ value }: { value: SelectedCursor }) => {
+  selectedCursor.value = value;
+};
 
 // To hide UI
 let started = computed(() => {
@@ -220,7 +218,14 @@ onKeyStroke(["r", "R"], (e) => {
     @mousemove="onMouseMove"
   >
     <!-- Navbar -->
-    <Navbar />
+    <Navbar
+      :selected-cursor="selectedCursor"
+      @select-cursor="
+        (value) => {
+          handleCursorChange({ value: value });
+        }
+      "
+    />
 
     <!-- Content -->
     <div
@@ -511,13 +516,22 @@ onKeyStroke(["r", "R"], (e) => {
   />
 
   <FluidCursor
-    v-if="enabled"
-    :density-dissipation="props.densityDissipation"
-    :velocity-dissipation="props.velocityDissipation"
-    :pressure="props.pressure"
-    :curl="props.curl"
-    :splat-radius="props.splatRadius"
-    :splat-force="props.splatForce"
-    :transparent="props.transparent"
+    v-if="selectedCursor === 'fluid'"
+    :density-dissipation="FluidCursorPropsValues.densityDissipation"
+    :velocity-dissipation="FluidCursorPropsValues.velocityDissipation"
+    :pressure="FluidCursorPropsValues.pressure"
+    :curl="FluidCursorPropsValues.curl"
+    :splat-radius="FluidCursorPropsValues.splatRadius"
+    :splat-force="FluidCursorPropsValues.splatForce"
+    :transparent="FluidCursorPropsValues.transparent"
+  />
+
+  <SleekLineCursor
+    v-if="selectedCursor === 'sleekline'"
+    :friction="SleekLineCursorPropsValues.friction"
+    :trails="SleekLineCursorPropsValues.trails"
+    :size="SleekLineCursorPropsValues.size"
+    :dampening="SleekLineCursorPropsValues.dampening"
+    :tension="SleekLineCursorPropsValues.tension"
   />
 </template>

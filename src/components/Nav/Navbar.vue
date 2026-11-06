@@ -10,8 +10,18 @@ import Kbd from "../ui/kbd/Kbd.vue";
 import KbdGroup from "../ui/kbd/KbdGroup.vue";
 import Separator from "../ui/separator/Separator.vue";
 import ThemeToggler from "./ThemeToggler.vue";
+import type { SelectedCursor } from "@/types/SelectedCursor.ts";
+import RadioGroup from "../ui/radio-group/RadioGroup.vue";
+import RadioGroupItem from "../ui/radio-group/RadioGroupItem.vue";
+import { Label } from "reka-ui";
 
-// Didn't give it
+const emit = defineEmits<{
+  (emit: "selectCursor", value: SelectedCursor): void;
+}>();
+
+const { selectedCursor } = defineProps<{
+  selectedCursor: SelectedCursor;
+}>();
 
 const shortcuts: ShortcutDefinition[] = [
   {
@@ -72,12 +82,34 @@ const shortcuts: ShortcutDefinition[] = [
           </div>
 
           <!-- Settings -->
-
           <div class="flex flex-row items-center space-x-1 mt-5">
             <Settings animate-on-hover class="W-5 h-5" />
             <p class="text-md font-semibold text-foreground">Settings</p>
           </div>
           <Separator class="my-2" />
+
+          <!-- Cursor select -->
+          <RadioGroup
+            @update:model-value="
+              (value) => {
+                emit('selectCursor', value as SelectedCursor);
+              }
+            "
+            :default-value="selectedCursor"
+          >
+            <div class="flex items-center space-x-2">
+              <RadioGroupItem id="fluid" value="fluid" />
+              <Label for="fluid">Fluid</Label>
+            </div>
+            <div class="flex items-center space-x-2">
+              <RadioGroupItem id="sleekline" value="sleekline" />
+              <Label for="sleekline">Sleekline</Label>
+            </div>
+            <div class="flex items-center space-x-2">
+              <RadioGroupItem id="default" value="default" />
+              <Label for="default">Default</Label>
+            </div>
+          </RadioGroup>
         </HoverCardContent>
       </HoverCard>
 
