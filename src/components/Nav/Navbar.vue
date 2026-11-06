@@ -42,7 +42,7 @@ const shortcuts: ShortcutDefinition[] = [
   <div
     class="w-full h-[10vh] px-4 py-2 flex flex-row items-center justify-between border-b border-border/50"
   >
-    <h1 class="text-xl font-semibold text-foreground">Typing speed</h1>
+    <h1 class="text-xl font-semibold text-foreground">Typo!</h1>
     <div class="flex flex-row items-center space-x-7">
       <!-- Hover Card -->
       <HoverCard class="mx-20">
