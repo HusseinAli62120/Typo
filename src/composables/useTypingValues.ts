@@ -21,7 +21,7 @@ export default function useTypingValues() {
   // Modes
   let mode = ref<Mode>((localStorage.getItem("mode") as Mode) || "time");
   let quantity = ref<Quantity>(
-    (Number(localStorage.getItem("quantity")) as Quantity) || 1,
+    (Number(localStorage.getItem("quantity")) as Quantity) || 15,
   );
   let difficulty = ref<Difficulty>(
     (localStorage.getItem("difficulty") as Difficulty) || "Normal",

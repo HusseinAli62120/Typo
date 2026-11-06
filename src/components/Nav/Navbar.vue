@@ -98,16 +98,26 @@ const shortcuts: ShortcutDefinition[] = [
             :default-value="selectedCursor"
           >
             <div class="flex items-center space-x-2">
-              <RadioGroupItem id="fluid" value="fluid" />
-              <Label for="fluid">Fluid</Label>
+              <RadioGroupItem class="cursor-pointer" id="fluid" value="fluid" />
+              <Label class="cursor-pointer w-full" for="fluid">Fluid</Label>
             </div>
             <div class="flex items-center space-x-2">
-              <RadioGroupItem id="sleekline" value="sleekline" />
-              <Label for="sleekline">Sleekline</Label>
+              <RadioGroupItem
+                class="cursor-pointer"
+                id="sleekline"
+                value="sleekline"
+              />
+              <Label class="cursor-pointer w-full" for="sleekline"
+                >Sleekline</Label
+              >
             </div>
             <div class="flex items-center space-x-2">
-              <RadioGroupItem id="default" value="default" />
-              <Label for="default">Default</Label>
+              <RadioGroupItem
+                class="cursor-pointer"
+                id="default"
+                value="default"
+              />
+              <Label class="cursor-pointer w-full" for="default">Default</Label>
             </div>
           </RadioGroup>
         </HoverCardContent>

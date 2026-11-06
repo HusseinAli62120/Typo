@@ -1,1 +1,1 @@
-export type Quantity = 1 | 30 | 60 | 120 | 300;
+export type Quantity = 15 | 30 | 60 | 120 | 300;

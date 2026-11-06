@@ -31,7 +31,7 @@ import type { Punctuation } from "@/types/Punctuation.ts";
 
 // Tab values (so not to repeat the code for each entry)
 const modes: Mode[] = ["time", "words"];
-const quantities: Quantity[] = [1, 30, 60, 120, 300];
+const quantities: Quantity[] = [15, 30, 60, 120, 300];
 const difficulties: Difficulty[] = ["Normal", "Hard"];
 
 const {
