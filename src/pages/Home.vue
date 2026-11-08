@@ -216,7 +216,8 @@ onMounted(() => {
       letters: letters.value,
       typedWords: typedWords.value,
       typedLettersRaw: typedLettersRaw.value,
-      mistakes: mistakes.value,
+      mistakes: mistakes,
+      correctLetters: correctLetters,
       isPunctuation: punctuation.value,
     });
   });
@@ -231,7 +232,8 @@ onUnmounted(() => {
       letters: letters.value,
       typedWords: typedWords.value,
       typedLettersRaw: typedLettersRaw.value,
-      mistakes: mistakes.value,
+      mistakes: mistakes,
+      correctLetters: correctLetters,
       isPunctuation: punctuation.value,
     });
   });
@@ -630,7 +632,7 @@ onKeyStroke(["r", "R"], (e) => {
     :total-words="mode === 'words' ? words.length : typedWords.length"
     :total-characters="mode === 'words' ? letters.length : typedLetters.length"
     :consistency="consistency"
-    :mistakes="mistakes.length"
+    :mistakes="mistakes"
   />
 
   <FluidCursor

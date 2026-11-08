@@ -9,6 +9,9 @@ import { generate } from "random-words";
 import { computed, ref } from "vue";
 
 export default function useTypingValues() {
+  // How many words have already been converted to letters
+  let convertedWords = 0;
+
   // What the user is typing
   let typedLetters = ref<string[]>([]);
   let typedWords = ref<string[]>([]);
@@ -89,26 +92,11 @@ export default function useTypingValues() {
   //   Stats  //
 
   // Correct letters
-  const correctLetters = computed(() => {
-    let count = 0;
-    for (let i = 0; i < typedLetters.value.length; i++) {
-      // If punctuation, compare the letters
-      if (punctuation.value === "true") {
-        if (typedLetters.value[i] === letters.value[i]) count++;
 
-        // If not compare their lowercases
-      } else {
-        if (
-          typedLetters.value[i].toLowerCase() === letters.value[i].toLowerCase()
-        )
-          count++;
-      }
-    }
-    return count;
-  });
+  let correctLetters = ref<number>(0);
 
   // Mistakes
-  const mistakes = ref<boolean[]>([]);
+  const mistakes = ref<number>(0);
 
   // Correct words
   const correctWords = computed(() => {
@@ -263,18 +251,20 @@ export default function useTypingValues() {
     typedLettersRaw.value = [];
     graphArray.value = [];
     typedWords.value = [];
-    mistakes.value = [];
+    mistakes.value = 0;
     now.value = Date.now();
     startTime.value = null;
     endTime.value = null;
     countdown.value = quantity.value;
     isDone.value = false;
     averageWPM.value = 0;
+    correctLetters.value = 0;
 
     // Generate new words only on restart, not on repeat
     if (!repeat) {
       words.value = [];
       letters.value = [];
+      convertedWords = 0;
     }
   };
 
@@ -358,7 +348,11 @@ export default function useTypingValues() {
       words.value = words.value.concat(generatedWords);
     }
 
-    getLetters({ words: words.value, letters: letters.value });
+    getLetters({
+      words: words.value,
+      letters: letters.value,
+      fromWord: convertedWords,
+    });
   };
 
   return {

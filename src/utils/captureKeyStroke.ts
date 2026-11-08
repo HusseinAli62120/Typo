@@ -1,8 +1,20 @@
-import { ref } from "vue";
+import { ref, type Ref } from "vue";
 import { allowedKeys } from "./values";
 import type { Punctuation } from "@/types/Punctuation";
 
 let currentWord = ref<string>("");
+
+// Same comparison the old correctLetters loop used
+const isMatch = (
+  typed: string | undefined,
+  expected: string | undefined,
+  isPunctuation: Punctuation,
+) => {
+  if (typed === undefined || expected === undefined) return false;
+  return isPunctuation === "true"
+    ? typed === expected
+    : typed.toLowerCase() === expected.toLowerCase();
+};
 
 export const captureKeyStroke = ({
   e,
@@ -11,6 +23,7 @@ export const captureKeyStroke = ({
   typedWords,
   typedLettersRaw,
   mistakes,
+  correctLetters, // NEW: pass the ref from the composable
   isPunctuation = "false",
 }: {
   e: KeyboardEvent;
@@ -18,7 +31,8 @@ export const captureKeyStroke = ({
   letters: string[];
   typedWords: string[];
   typedLettersRaw: string[];
-  mistakes: boolean[];
+  mistakes: Ref<number>;
+  correctLetters: Ref<number>;
   isPunctuation: Punctuation;
 }) => {
   // Stop if done typing
@@ -31,89 +45,67 @@ export const captureKeyStroke = ({
   )
     return;
 
-  const expectedCharacter = letters[typedLetters.length];
-
-  const isSpace = expectedCharacter === " ";
-
-  // Check if the key is allowed
   if (!allowedKeys.includes(e.key)) return;
-  // Check for command keys
-  else if (e.ctrlKey) {
-    // Repeat or restart keys
-    if (e.key === "c" || e.key === "C" || e.key === "r" || e.key === "R") {
-      currentWord.value = "";
-      return;
-    }
+
+  // Command keys
+  if (e.ctrlKey) {
+    if (["c", "C", "r", "R"].includes(e.key)) currentWord.value = "";
+    return;
   }
+
   // Delete on backspace
-  else if (e.key === "Backspace") {
-    // Nothing to delete
-    if (typedLetters.length === 0) {
-      return;
+  if (e.key === "Backspace") {
+    // Previous expected character index
+    const last = typedLetters.length - 1;
+    if (last < 0) return;
+
+    // Check if the letter about to be removed is correct, if so, decrement the count
+    // Decrement BEFORE popping, using the letter that is about to be removed
+    if (isMatch(typedLetters[last], letters[last], isPunctuation)) {
+      correctLetters.value--;
     }
 
-    const previousExpectedCharacter = letters[typedLetters.length - 1];
-    // console.log(previousExpectedCharacter);
-
-    // Is space
-    if (previousExpectedCharacter === " ") {
-      const deletedWord = typedWords.pop();
-      currentWord.value = deletedWord as string;
-      typedLetters.pop();
+    // If previous expected was " ", remove it from typed words and set the popped value to the current word
+    if (letters[last] === " ") {
+      currentWord.value = typedWords.pop() ?? "";
+      // Just remove the letter from the current word
     } else {
       currentWord.value = currentWord.value.slice(0, -1);
-      typedLetters.pop();
     }
+    typedLetters.pop();
+    return;
+  }
 
-    // Submit
-  } else if (e.key === "Enter") {
+  if (e.key === "Enter") {
     console.log("Submit");
+    return;
+  }
 
-    // Space
-  } else if (e.key === " ") {
+  // Space or a normal character //
+
+  // Prevent scrolling
+  if (e.key === " ") {
     e.preventDefault();
-    // Push to the raw array
-    typedLettersRaw.push(e.key);
-
-    // Check for mistakes
-    if (e.key != expectedCharacter) mistakes.push(true);
-
-    if (isSpace) {
-      typedWords.push(currentWord.value);
-      currentWord.value = "";
-      typedLetters.push(e.key);
-    } else {
-      typedLetters.push(e.key);
-      currentWord.value += e.key;
-    }
   }
 
-  // Add character
-  else {
-    // Push to the raw array
-    typedLettersRaw.push(e.key);
+  // Get the expected character and see if what is typed is correct
+  const expectedCharacter = letters[typedLetters.length];
+  const matched = isMatch(e.key, expectedCharacter, isPunctuation);
 
-    // Check for mistakes
-    if (isPunctuation === "true") {
-      if (e.key != expectedCharacter) {
-        mistakes.push(true);
-      }
-    } else {
-      if (e.key.toLowerCase() != expectedCharacter.toLowerCase()) {
-        mistakes.push(true);
-      }
-    }
+  typedLettersRaw.push(e.key);
 
-    // If the expected character is space, push the word and reset the current one, else just add the char to current word
-    if (isSpace) {
-      typedWords.push(currentWord.value);
-      currentWord.value = "";
-      typedLetters.push(e.key);
-    } else {
-      currentWord.value += e.key;
-      typedLetters.push(e.key);
-    }
+  // Check if the key is correct
+  if (matched) correctLetters.value++;
+  else mistakes.value++;
+
+  // If expected character is a space, that means new word, push the current word and reset it.
+  if (expectedCharacter === " ") {
+    typedWords.push(currentWord.value);
+    currentWord.value = "";
+  } else {
+    currentWord.value += e.key;
   }
+  typedLetters.push(e.key);
 
   // Push the final word when all letters have been typed and reset current word
   if (typedLetters.length === letters.length && currentWord.value) {
