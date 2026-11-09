@@ -1,12 +1,10 @@
 <script lang="ts" setup>
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import Navbar from "../components/Nav/Navbar.vue";
-import isMatchingLowerCase from "../utils/isMatchingLowerCase.ts";
 import { captureKeyStroke } from "../utils/captureKeyStroke.ts";
 import Results from "./Results/Results.vue";
 import FluidCursor from "@/components/ui/fluid-cursor/FluidCursor.vue";
 import { FluidCursorPropsValues } from "@/types/FluidCursor.ts";
-import { getLetterIndex, getWordStartIndex } from "@/utils/getIndexes.ts";
 import useTypingValues from "@/composables/useTypingValues.ts";
 import Repeat from "@/components/animate-ui/icons/Repeat.vue";
 import Restart from "@/components/animate-ui/icons/RotateCcw.vue";
@@ -28,6 +26,7 @@ import type { SelectedCursor } from "@/types/SelectedCursor.ts";
 import type { Difficulty } from "@/types/Difficulty.ts";
 import Toggle from "@/components/ui/toggle/Toggle.vue";
 import type { Punctuation } from "@/types/Punctuation.ts";
+import TypingWord from "@/components/TypingWord.vue";
 
 // Tab values (so not to repeat the code for each entry)
 const modes: Mode[] = ["time", "words"];
@@ -61,6 +60,8 @@ const {
   averageWPM,
   difficulty,
   punctuation,
+  cursorFor,
+  typedFor,
 } = useTypingValues();
 
 // Cursor value
@@ -454,117 +455,15 @@ onKeyStroke(["r", "R"], (e) => {
         >
           <div class="w-full flex flex-wrap justify-start">
             <!-- Words map -->
-            <span
-              v-for="(word, wordIndex) in words"
-              :key="'w-' + wordIndex"
-              class="inline-flex items-center"
-            >
-              <!-- Letters in the word -->
-              <span
-                v-for="(letter, i) in word.split('')"
-                :key="'l-' + wordIndex + '-' + i"
-                class="inline-flex flex-col items-center"
-              >
-                <!-- Typed letter  -->
-                <span
-                  class="text-lg font-mono h-6 flex items-center justify-center select-none"
-                  :class="[
-                    // Check if the letter exists
-                    typedLetters[
-                      getLetterIndex({
-                        wordIndex: wordIndex,
-                        letterIndex: i,
-                        words: words,
-                      })
-                    ] &&
-                    // If not matching, show the character, and it is red
-                    !isMatchingLowerCase({
-                      index: getLetterIndex({
-                        wordIndex: wordIndex,
-                        letterIndex: i,
-                        words: words,
-                      }),
-                      letter: letter,
-                      typedLetters: typedLetters,
-                      isPunctuation: punctuation,
-                    })
-                      ? 'text-red-600 font-semibold opacity-100'
-                      : 'opacity-0',
-                  ]"
-                >
-                  {{
-                    typedLetters[
-                      getLetterIndex({
-                        wordIndex: wordIndex,
-                        letterIndex: i,
-                        words: words,
-                      })
-                    ]
-                  }}
-                </span>
-
-                <!-- Intended letter  -->
-                <span
-                  class="text-4xl"
-                  :class="[
-                    // Check if the letter exists, if so, add a color based on if it matches or not
-                    typedLetters[
-                      getLetterIndex({
-                        wordIndex: wordIndex,
-                        letterIndex: i,
-                        words: words,
-                      })
-                    ]
-                      ? isMatchingLowerCase({
-                          index: getLetterIndex({
-                            wordIndex: wordIndex,
-                            letterIndex: i,
-                            words: words,
-                          }),
-                          letter: letter,
-                          typedLetters: typedLetters,
-                          isPunctuation: punctuation,
-                        })
-                        ? 'text-emerald-600'
-                        : 'text-red-600'
-                      : 'text-muted-foreground',
-                    // Add cursor to the current letter
-                    typedLetters.length ===
-                      getLetterIndex({
-                        wordIndex: wordIndex,
-                        letterIndex: i,
-                        words: words,
-                      }) && 'cursor',
-                  ]"
-                >
-                  {{ letter }}
-                </span>
-              </span>
-
-              <!-- Spaces -->
-              <span
-                :class="[
-                  // Get to the start of the previous word + its length to reach the space
-                  typedLetters[
-                    getWordStartIndex({ wordIndex: wordIndex, words: words }) +
-                      word.length
-                  ] &&
-                  typedLetters[
-                    getWordStartIndex({ wordIndex: wordIndex, words: words }) +
-                      word.length
-                  ] !== ' '
-                    ? 'bg-red-200'
-                    : '',
-                  typedLetters.length ===
-                    getWordStartIndex({ wordIndex: wordIndex, words: words }) +
-                      word.length && 'cursor',
-                ]"
-                v-if="wordIndex <= words.length - 1"
-              >
-                <!-- Add spaces between words except the last word -->
-                {{ isDev ? "" : " " }}
-              </span>
-            </span>
+            <TypingWord
+              v-for="(word, i) in words"
+              :key="i"
+              :word="word.split('')"
+              :typed="typedFor({ wordIndex: i })"
+              :cursor="cursorFor({ wordIndex: i })"
+              :punctuation="punctuation"
+              :is-dev="isDev"
+            />
           </div>
         </div>
 

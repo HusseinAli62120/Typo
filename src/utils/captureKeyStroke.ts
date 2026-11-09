@@ -1,20 +1,9 @@
 import { ref, type Ref } from "vue";
 import { allowedKeys } from "./values";
 import type { Punctuation } from "@/types/Punctuation";
+import isMatching from "./isMatching";
 
 let currentWord = ref<string>("");
-
-// Same comparison the old correctLetters loop used
-const isMatch = (
-  typed: string | undefined,
-  expected: string | undefined,
-  isPunctuation: Punctuation,
-) => {
-  if (typed === undefined || expected === undefined) return false;
-  return isPunctuation === "true"
-    ? typed === expected
-    : typed.toLowerCase() === expected.toLowerCase();
-};
 
 export const captureKeyStroke = ({
   e,
@@ -61,7 +50,13 @@ export const captureKeyStroke = ({
 
     // Check if the letter about to be removed is correct, if so, decrement the count
     // Decrement BEFORE popping, using the letter that is about to be removed
-    if (isMatch(typedLetters[last], letters[last], isPunctuation)) {
+    if (
+      isMatching({
+        typedLetter: typedLetters[last],
+        letter: letters[last],
+        isPunctuation: isPunctuation,
+      })
+    ) {
       correctLetters.value--;
     }
 
@@ -90,17 +85,26 @@ export const captureKeyStroke = ({
 
   // Get the expected character and see if what is typed is correct
   const expectedCharacter = letters[typedLetters.length];
-  const matched = isMatch(e.key, expectedCharacter, isPunctuation);
+  const matched = isMatching({
+    typedLetter: e.key,
+    letter: expectedCharacter,
+    isPunctuation: isPunctuation,
+  });
 
   typedLettersRaw.push(e.key);
 
   // Check if the key is correct
   if (matched) correctLetters.value++;
-  else mistakes.value++;
+  else {
+    mistakes.value++;
+    // console.log(`mistake: ${mistakes.value}`);
+  }
 
   // If expected character is a space, that means new word, push the current word and reset it.
   if (expectedCharacter === " ") {
     typedWords.push(currentWord.value);
+    // console.log(`typed words: ${typedWords.length}`);
+
     currentWord.value = "";
   } else {
     currentWord.value += e.key;

@@ -49,6 +49,32 @@ export default function useTypingValues() {
   let graphArray = ref<number[]>([]);
   let graphTimer = ref<number | undefined>(undefined);
 
+  // Compute the starting index of each word
+  const wordStarts = computed(() => {
+    const starts: number[] = [];
+    let acc = 0;
+    for (const w of words.value) {
+      starts.push(acc);
+      acc += w.length + 1;
+    }
+    return starts;
+  });
+
+  // // Current typed letters for a specific word (including its trailing space)
+  const typedFor = ({ wordIndex }: { wordIndex: number }) => {
+    const wordStart = wordStarts.value[wordIndex];
+    return typedLetters.value.slice(
+      wordStart,
+      wordStart + words.value[wordIndex].length + 1,
+    );
+  };
+
+  // Offset of the cursor inside this word, or -1 if it's elsewhere
+  const cursorFor = ({ wordIndex }: { wordIndex: number }) => {
+    const off = typedLetters.value.length - wordStarts.value[wordIndex];
+    return off >= 0 && off <= words.value[wordIndex].length ? off : -1;
+  };
+
   // Progress
   let progress = computed(() => {
     if (mode.value === "time") {
@@ -363,13 +389,7 @@ export default function useTypingValues() {
     typedLettersRaw,
     mode,
     quantity,
-    startTime,
-    endTime,
-    now,
-    timer,
     graphArray,
-    graphTimer,
-    elapsedSeconds,
     time,
     correctLetters,
     correctWords,
@@ -378,7 +398,6 @@ export default function useTypingValues() {
     startTimers,
     stopTimers,
     countdown,
-    countdownTimer,
     restart,
     generateWords,
     progress,
@@ -387,5 +406,7 @@ export default function useTypingValues() {
     averageWPM,
     difficulty,
     punctuation,
+    typedFor,
+    cursorFor,
   };
 }
