@@ -8,7 +8,6 @@ const { word, typed, cursor, punctuation } = defineProps<{
   typed: string[]; // Current typed letters for a specific word
   cursor: number;
   punctuation: Punctuation;
-  isDev: boolean;
 }>();
 
 const items = computed(() =>

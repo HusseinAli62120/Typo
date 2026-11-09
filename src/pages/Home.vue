@@ -33,8 +33,6 @@ const modes: Mode[] = ["time", "words"];
 const quantities: Quantity[] = [15, 30, 60, 120, 300];
 const difficulties: Difficulty[] = ["Normal", "Hard"];
 
-const isDev = import.meta.env.DEV;
-
 const {
   words,
   typedWords,
@@ -462,7 +460,6 @@ onKeyStroke(["r", "R"], (e) => {
               :typed="typedFor({ wordIndex: i })"
               :cursor="cursorFor({ wordIndex: i })"
               :punctuation="punctuation"
-              :is-dev="isDev"
             />
           </div>
         </div>

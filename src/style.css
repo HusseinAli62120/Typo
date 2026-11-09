@@ -194,7 +194,7 @@
 .cursor::before {
   content: "";
   position: absolute;
-  @apply absolute left-0 w-0.5 bottom-0 bg-black;
+  @apply absolute left-0 w-0.5 bottom-0 bg-muted-foreground rounded-md;
   height: 1em;
   animation: blink 1s steps(1) infinite;
 }
