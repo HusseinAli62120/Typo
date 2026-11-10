@@ -99,6 +99,8 @@ export const captureKeyStroke = ({
     mistakes.value++;
     // console.log(`mistake: ${mistakes.value}`);
   }
+  // console.log(expectedCharacter);
+  // console.log(e.key);
 
   // If expected character is a space, that means new word, push the current word and reset it.
   if (expectedCharacter === " ") {

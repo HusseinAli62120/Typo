@@ -231,27 +231,21 @@ export default function useTypingValues() {
       // Update "now" value every 250ms
       timer.value = window.setInterval(() => (now.value = Date.now()), 250);
     }
-
-    // In words mode, graphTimer records WPM every second (Since we don't have a countdown timer)
-    if (mode.value === "words" && graphTimer.value === undefined) {
-      // Record WPM every second
+    // Record WPM entry every second, capped to quantity selected
+    if (graphTimer.value === undefined) {
       graphTimer.value = window.setInterval(() => {
-        graphArray.value.push(wpm.value);
+        if (graphArray.value.length < quantity.value) {
+          graphArray.value.push(wpm.value);
+        }
       }, 1000);
     }
-
     // When mode is time, countdownTimer manages countdown and graphArray entries
     if (mode.value === "time" && countdownTimer.value === undefined) {
       countdownTimer.value = window.setInterval(() => {
         countdown.value -= 1;
 
-        // Record WPM entry every second, capped to quantity selected
-        if (graphArray.value.length < quantity.value) {
-          graphArray.value.push(wpm.value);
-        }
-
         // Generate more words to ensure user never runs out of words
-        generateWords({ selectedQuantity: 5 });
+        generateWords({ selectedQuantity: 5, append: true });
 
         // Check if finished
         if (countdown.value <= 0) {
@@ -303,11 +297,13 @@ export default function useTypingValues() {
     selectedQuantity,
     selectedDifficulty,
     isPunctuation,
+    append = false,
   }: {
     selectedMode?: Mode;
     selectedQuantity?: number;
     selectedDifficulty?: Difficulty;
     isPunctuation?: Punctuation;
+    append?: boolean;
   }) => {
     // Either selected tab value or current value
     const activeMode = selectedMode || mode.value;
@@ -315,41 +311,37 @@ export default function useTypingValues() {
     const activeDifficulty = selectedDifficulty || difficulty.value;
     const activePunctuation = isPunctuation || punctuation.value;
 
-    if (activeMode === "words") {
-      // In words mode, generate words, filter them to remove more difficult ones and keep doing this unitl we have enough
-      while (words.value.length < activeQuantity) {
-        let generatedWords: string[] =
-          activeDifficulty === "Normal"
-            ? (generate({
-                exactly: activeQuantity,
-                maxLength: 7,
-              }) as string[])
-            : (generate({
-                exactly: activeQuantity,
-                minLength: 4,
-              }) as string[]);
+    // Generate words, filter them to remove more difficult ones (if need be), punctuate them (if need be) and keep doing this unitl we have enough
+    while (words.value.length < activeQuantity) {
+      let generatedWords: string[] =
+        activeDifficulty === "Normal"
+          ? (generate({
+              exactly: activeQuantity,
+              maxLength: 7,
+            }) as string[])
+          : (generate({
+              exactly: activeQuantity,
+              minLength: 4,
+            }) as string[]);
 
-        // Normalize only on normal difficulty
-        if (activeDifficulty === "Normal") {
-          generatedWords = normalizeWords({ words: generatedWords });
-        }
-
-        // Apply punctuator if active
-        if (activePunctuation === "true") {
-          generatedWords = punctuate({ words: generatedWords, final: true });
-        }
-
-        generatedWords.forEach((value) => {
-          if (words.value.length < activeQuantity) {
-            words.value.push(value);
-          }
-        });
+      // Normalize only on normal difficulty
+      if (activeDifficulty === "Normal") {
+        generatedWords = normalizeWords({ words: generatedWords });
       }
+
+      // Apply punctuator if active
+      if (activePunctuation === "true") {
+        generatedWords = punctuate({ words: generatedWords, final: true });
+      }
+      generatedWords.forEach((value) => {
+        if (words.value.length < activeQuantity) {
+          words.value.push(value);
+        }
+      });
     }
 
-    // In time mode, we don't have to worry about words quantity, and we generate more every second, so we simply generate
-    // words and normalize them
-    if (activeMode === "time") {
+    // If extra words are generated (in time mode) add them to the current array
+    if (append) {
       let generatedWords: string[] =
         activeDifficulty === "Normal"
           ? (generate({
@@ -371,6 +363,7 @@ export default function useTypingValues() {
         generatedWords = punctuate({ words: generatedWords, final: false });
       }
 
+      // Add the extra words every second
       words.value = words.value.concat(generatedWords);
     }
 
@@ -378,7 +371,11 @@ export default function useTypingValues() {
       words: words.value,
       letters: letters.value,
       fromWord: convertedWords,
+      mode: activeMode,
     });
+
+    // Update converted words
+    convertedWords = words.value.length;
   };
 
   return {

@@ -1,11 +1,15 @@
+import type { Mode } from "@/types/Mode";
+
 export default function getLetters({
   words,
   letters,
   fromWord = 0,
+  mode,
 }: {
   words: string[];
   letters: string[];
-  fromWord?: number;
+  fromWord?: number; // How many words to skip (already converted to letters)
+  mode: Mode;
 }) {
   for (let i = fromWord; i < words.length; i++) {
     let word = words[i];
@@ -14,9 +18,12 @@ export default function getLetters({
     // Add the letters to the end of the array with a space
     if (i < words.length - 1) {
       letters.push(...wordLetters, " ");
-      // final Character, don't add space
+      // final Character
     } else {
-      letters.push(...wordLetters);
+      // In time mode, continue adding spaces, since the words are infinite (Final word in this case represents the batch)
+      if (mode === "time") letters.push(...wordLetters, " ");
+      // In words mode, don't add a space to the final character
+      else letters.push(...wordLetters);
     }
   }
 }
