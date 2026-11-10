@@ -24,6 +24,9 @@ export const captureKeyStroke = ({
   correctLetters: Ref<number>;
   isPunctuation: Punctuation;
 }) => {
+  // If no typed letters, current word is empty
+  if (typedLetters.length === 0) currentWord.value = "";
+
   // Stop if done typing
   if (typedLetters.length >= letters.length) return;
 
